@@ -1,0 +1,62 @@
+name: Enable GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  enable:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enable Pages from main root
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const source = { branch: "main", path: "/" };
+
+            async function describe(data) {
+              core.info(JSON.stringify({
+                html_url: data.html_url,
+                status: data.status,
+                build_type: data.build_type,
+                source: data.source
+              }));
+            }
+
+            try {
+              const { data } = await github.rest.repos.getPages({ owner, repo });
+              await describe(data);
+              const branch = data.source && data.source.branch;
+              const path = data.source && data.source.path;
+              if (data.build_type === "legacy" && branch === "main" && path === "/") {
+                core.info("Pages already publishes from main /");
+                return;
+              }
+              await github.rest.repos.updateInformationAboutPagesSite({
+                owner,
+                repo,
+                build_type: "legacy",
+                source
+              });
+              core.info("Updated Pages source to main /");
+            } catch (error) {
+              if (error.status !== 404) {
+                core.setFailed(`Unable to read or update Pages: ${error.status} ${error.message}`);
+                return;
+              }
+              const { data } = await github.rest.repos.createPagesSite({
+                owner,
+                repo,
+                build_type: "legacy",
+                source
+              });
+              await describe(data);
+            }
