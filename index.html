@@ -1,0 +1,1969 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Supermarket Rush</title>
+<style>
+  html { font-size: 21px; }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: #071525;
+    color: #fff;
+    font-family: system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.25;
+  }
+  button, input { font: inherit; }
+  button { cursor: pointer; }
+  button:focus-visible { outline: 4px solid #111; outline-offset: 3px; }
+  header {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 12px;
+    align-items: center;
+    padding: 8px 12px;
+    background: #071525;
+    border-bottom: 6px solid #ffd23f;
+  }
+  .brand {
+    font-size: 1.65rem;
+    font-weight: 900;
+    color: #ffd23f;
+    letter-spacing: 0.01em;
+  }
+  .stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+    font-weight: 800;
+  }
+  .stats span, #btn-sound {
+    background: #163258;
+    color: #fff;
+    border: 2px solid #fff;
+    border-radius: 10px;
+    padding: 4px 8px;
+    font-weight: 800;
+  }
+  #btn-sound {
+    background: #ffd23f;
+    color: #111;
+    border-color: #111;
+    min-height: 44px;
+  }
+  .xpbar {
+    display: inline-block;
+    width: 88px;
+    height: 14px;
+    background: #2a2a2a;
+    border: 2px solid #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    vertical-align: middle;
+  }
+  #xp-fill { display: block; height: 100%; width: 0; background: #3dde7a; }
+  #timer {
+    flex: 1 1 100%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  #timer-track {
+    flex: 1;
+    height: 26px;
+    background: #2a2a2a;
+    border: 2px solid #fff;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  #timer-fill { height: 100%; width: 100%; background: #ffd23f; }
+  #timer-text { font-weight: 900; font-size: 1.35rem; min-width: 2.4rem; color: #fff; }
+  #timer.low #timer-fill { background: #ff2d2d; }
+  #timer.low #timer-text { color: #ffb4b4; }
+  #hud-lives i {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    margin-left: 4px;
+    border-radius: 50%;
+    background: #5a2430;
+    border: 2px solid #fff;
+    vertical-align: -2px;
+  }
+  #hud-lives i.on { background: #ff2d2d; }
+  body:not(.mode-play) .only-play { display: none !important; }
+  .screen { display: none; }
+  body.mode-title #screen-title { display: block; }
+  body.mode-shop #screen-shop { display: block; }
+  body.mode-results #screen-results { display: block; }
+  body.mode-play {
+    height: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  body.mode-play #app {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  body.mode-play #screen-play {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    flex-direction: column;
+  }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 12px 16px 32px; }
+  h1 { font-size: 2.7rem; line-height: 1.05; margin: 0.15rem 0; color: #ffd23f; }
+  h2 { font-size: 1.8rem; margin: 0 0 8px; }
+  h3 { font-size: 1.35rem; margin: 0 0 6px; }
+  .lede { font-size: 1.25rem; font-weight: 700; margin: 0 0 8px; }
+  .howto {
+    text-align: left;
+    display: inline-block;
+    margin: 4px auto 8px;
+    font-size: 1.12rem;
+    font-weight: 700;
+  }
+  .howto li { margin: 0.2rem 0; }
+  #screen-title { text-align: center; }
+  .examples { display: grid; gap: 6px; margin: 8px 0 10px; }
+  .examples p, .cheer, .gear-line {
+    margin: 0;
+    background: #fff;
+    color: #111;
+    border: 3px solid #ffd23f;
+    border-radius: 12px;
+    padding: 8px 12px;
+    font-weight: 800;
+    font-size: 1.22rem;
+  }
+  .go-btn {
+    display: inline-block;
+    background: #ffd23f;
+    color: #111;
+    border: 4px solid #111;
+    border-radius: 16px;
+    min-height: 88px;
+    min-width: 260px;
+    padding: 10px 22px;
+    font-size: 1.7rem;
+    font-weight: 900;
+    box-shadow: 0 6px 0 #8a6a00;
+  }
+  .go-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 #8a6a00; }
+  .marquee { overflow: hidden; background: #102844; border-bottom: 4px solid #ffd23f; }
+  .marquee-track { display: flex; width: max-content; animation: slide 28s linear infinite; }
+  .marquee-set { display: flex; gap: 10px; padding: 6px 10px 6px 0; }
+  .mini-card {
+    width: 180px;
+    background: #fff;
+    color: #111;
+    border: 3px solid #111;
+    border-radius: 12px;
+    padding: 6px;
+    text-align: center;
+    font-weight: 800;
+    font-size: 0.95rem;
+  }
+  .mini-card canvas { display: block; margin: 0 auto; }
+  @keyframes slide { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+  #speech {
+    margin: 8px 8px 0;
+    background: #fff4b8;
+    color: #111;
+    border: 4px solid #111;
+    border-radius: 14px;
+    padding: 8px 12px;
+    font-size: 1.65rem;
+    font-weight: 900;
+    text-align: center;
+    min-height: 4.2rem;
+  }
+  .play-layout {
+    flex: 1;
+    min-height: 0;
+    min-width: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 330px;
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 8px;
+    padding: 8px;
+  }
+  .play-layout > * { min-width: 0; }
+  #list {
+    grid-column: 1 / -1;
+    background: #fffdf6;
+    color: #111;
+    border: 4px solid #111;
+    border-radius: 12px;
+    padding: 8px 10px;
+    overflow: visible;
+    min-height: 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+  #list h2 { font-size: 1.2rem; color: #111; margin: 0; flex: 0 0 auto; }
+  .goal {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex: 1 1 220px;
+    background: #fff;
+    border: 3px solid #111;
+    border-radius: 12px;
+    padding: 6px;
+    margin: 0;
+  }
+  .goal.now { background: #fff3b0; border-color: #8a5a00; }
+  .goal.got { background: #d9f5e3; border-color: #0a6b38; }
+  .goal strong { display: block; font-size: 1.2rem; }
+  .goal em { font-style: normal; font-weight: 800; font-size: 0.95rem; }
+  .cap { margin: 0; font-weight: 800; font-size: 0.95rem; flex: 1 1 160px; }
+  .stage-wrap {
+    grid-column: 1;
+    grid-row: 2;
+    min-height: 280px;
+    height: 100%;
+    position: relative;
+    border: 4px solid #ffd23f;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #c9a36a;
+  }
+  #stage { width: 100%; height: 100%; max-width: 100%; display: block; touch-action: none; }
+  .pad {
+    grid-column: 2;
+    grid-row: 2;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-areas: ". up ." "left down right";
+    gap: 8px;
+    align-content: center;
+  }
+  .pad button {
+    min-height: 84px;
+    min-width: 0;
+    background: #ffd23f;
+    color: #111;
+    border: 4px solid #111;
+    border-radius: 16px;
+    font-size: 1.15rem;
+    font-weight: 900;
+    box-shadow: 0 5px 0 #8a6a00;
+    touch-action: none;
+    user-select: none;
+    padding: 4px;
+  }
+  .pad button.held, .pad button:active {
+    background: #ff9f1c;
+    transform: translateY(3px);
+    box-shadow: 0 2px 0 #8a6a00;
+  }
+  #btn-up { grid-area: up; }
+  #btn-left { grid-area: left; }
+  #btn-down { grid-area: down; }
+  #btn-right { grid-area: right; }
+  .hint { grid-column: 1 / -1; margin: 4px 0 0; font-size: 0.95rem; font-weight: 700; text-align: center; }
+  .shop-layout, .results-layout { max-width: 1100px; margin: 0 auto; padding: 12px 16px 32px; }
+  .shop-layout { display: grid; grid-template-columns: 250px 1fr; gap: 16px; align-items: start; }
+  #preview {
+    width: 220px;
+    height: 260px;
+    background: #e7d3a8;
+    border: 4px solid #111;
+    border-radius: 16px;
+    display: block;
+  }
+  #wear-line { color: #111; background: #fff; border-radius: 12px; padding: 8px; font-weight: 800; }
+  .shop-copy p { margin: 0 0 8px; font-size: 1.15rem; font-weight: 700; }
+  .gear-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .gear-card {
+    background: #fff;
+    color: #111;
+    border: 4px solid #111;
+    border-radius: 16px;
+    padding: 10px;
+  }
+  .gear-card.owned { background: #e5f6ea; border-color: #0a6b38; }
+  .gear-card h3 { margin: 4px 0; }
+  .gear-card p { margin: 0 0 6px; font-weight: 700; }
+  .gear-card .cost { font-size: 1.25rem; font-weight: 900; }
+  .gear-card button {
+    width: 100%;
+    min-height: 64px;
+    border-radius: 12px;
+    border: 4px solid #02180e;
+    background: #064422;
+    color: #fff;
+    font-weight: 900;
+    font-size: 1.15rem;
+  }
+  .gear-card button:disabled {
+    background: #d5d5d5;
+    color: #222;
+    border-color: #222;
+    cursor: default;
+  }
+  #btn-next { width: 100%; margin-top: 12px; }
+  .big-score { font-size: 3rem; font-weight: 900; color: #ffd23f; margin: 8px 0; }
+  .stats-list { font-size: 1.3rem; font-weight: 800; }
+  .word-bank { display: flex; flex-wrap: wrap; gap: 8px; padding: 0; list-style: none; }
+  .word-bank li {
+    background: #fff;
+    color: #111;
+    border: 3px solid #111;
+    border-radius: 10px;
+    padding: 4px 8px;
+    font-weight: 800;
+  }
+  #screen-results .examples { margin-top: 12px; }
+  #btn-again { margin-top: 8px; }
+  @media (max-width: 1100px) {
+    .play-layout {
+      grid-template-columns: 1fr;
+      grid-template-rows: auto minmax(260px, 1fr) auto;
+    }
+    .play-layout { grid-template-columns: 1fr; grid-template-rows: auto minmax(220px, 1fr) auto; }
+    #list { grid-column: 1; grid-row: 1; max-height: none; overflow: visible; }
+    .stage-wrap { grid-column: 1; grid-row: 2; min-height: 220px; }
+    .pad { grid-column: 1; grid-row: 3; width: min(440px, 100%); margin: 0 auto; }
+    .gear-grid { grid-template-columns: 1fr; }
+    .shop-layout { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 700px) {
+    html { font-size: 18px; }
+    h1 { font-size: 2.2rem; }
+    .pad button { min-height: 76px; }
+  }
+  @media (max-height: 860px) {
+    h1 { font-size: 2.15rem; margin: 0; }
+    .lede { margin: 0 0 4px; }
+    .howto { font-size: 1.02rem; margin: 2px auto 6px; }
+    .howto li { margin: 0; }
+    .examples { gap: 4px; margin: 6px 0 8px; }
+    .examples p { padding: 4px 8px; }
+    .go-btn { min-height: 72px; font-size: 1.45rem; }
+    .wrap { padding-top: 6px; padding-bottom: 12px; }
+    .marquee-set { padding: 4px 8px 4px 0; }
+    .mini-card { width: 148px; font-size: 0.82rem; padding: 4px; }
+    body.mode-play #speech { min-height: 0; font-size: 1.35rem; padding: 6px 10px; margin-top: 4px; }
+    #list { max-height: none; overflow: visible; }
+    .pad button { min-height: 68px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .marquee-track { animation: none; flex-wrap: wrap; width: auto; justify-content: center; }
+    .marquee-set + .marquee-set { display: none; }
+    .go-btn { box-shadow: none; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">Supermarket Rush</div>
+  <div class="stats">
+    <span id="hud-level">Level 1</span>
+    <span id="hud-xp">XP 0/70</span>
+    <span class="xpbar" aria-hidden="true"><i id="xp-fill"></i></span>
+    <span id="hud-coins">Coins 0</span>
+    <span id="hud-score">Score 0</span>
+    <span id="hud-rush">Ready</span>
+    <span id="hud-lives" class="only-play">Lives <i class="on"></i><i class="on"></i><i class="on"></i></span>
+    <span id="hud-basket" class="only-play">Basket 0/5</span>
+    <button type="button" id="btn-sound" aria-pressed="true">Sound on</button>
+  </div>
+  <div id="timer" class="only-play">
+    <div id="timer-track"><div id="timer-fill"></div></div>
+    <span id="timer-text">50</span>
+  </div>
+</header>
+<main id="app">
+  <section id="screen-title" class="screen">
+    <div class="marquee" aria-hidden="false">
+      <div class="marquee-track" id="marquee"></div>
+    </div>
+    <div class="wrap">
+      <h1>Supermarket Rush</h1>
+      <p class="lede">Chapter 3: Food and drinks</p>
+      <ul class="howto">
+        <li>Move with the arrow keys or the big buttons.</li>
+        <li>Touch the food on your shopping list.</li>
+        <li>Wrong food costs a life and slows you down.</li>
+        <li>You have 3 lives and 50 seconds.</li>
+        <li>You play 3 rushes. Between rushes, buy gear.</li>
+        <li>When your level goes up, food moves faster and pays a little more.</li>
+      </ul>
+      <div class="examples">
+        <p>Can I have a jar of honey, please?</p>
+        <p>I'd like a loaf of bread, please.</p>
+        <p>It's fifteen dollars.</p>
+      </div>
+      <button type="button" id="btn-start" class="go-btn">Start rush</button>
+    </div>
+  </section>
+  <section id="screen-play" class="screen">
+    <div id="speech" aria-live="polite">Ready?</div>
+    <div class="play-layout">
+      <aside id="list"></aside>
+      <div class="stage-wrap" id="stage-wrap"><canvas id="stage"></canvas></div>
+      <div class="pad">
+        <button type="button" id="btn-up">Up</button>
+        <button type="button" id="btn-left">Left</button>
+        <button type="button" id="btn-down">Down</button>
+        <button type="button" id="btn-right">Right</button>
+        <p class="hint">Hold a button, or use the arrow keys.</p>
+      </div>
+    </div>
+  </section>
+  <section id="screen-shop" class="screen"></section>
+  <section id="screen-results" class="screen"><div id="results-root"></div></section>
+</main>
+<noscript><p class="wrap">This game needs JavaScript.</p></noscript>
+<script>
+"use strict";
+(function () {
+  var FOODS = [
+    { id: "soya", name: "a carton of soya milk", price: 12, kind: "carton", color: "#f7f4ea", accent: "#1f8a45" },
+    { id: "sausages", name: "a tin of sausages", price: 18, kind: "tin", color: "#d23b3b", accent: "#f3d48b" },
+    { id: "nuts", name: "a tin of nuts", price: 16, kind: "tin", color: "#a56b32", accent: "#f0d7a2" },
+    { id: "raisins", name: "a packet of raisins", price: 10, kind: "packet", color: "#7a3e9d", accent: "#f2d24b" },
+    { id: "seaweed", name: "a packet of seaweed", price: 8, kind: "packet", color: "#1f7a46", accent: "#d7f2c8" },
+    { id: "chocolate", name: "a bar of chocolate", price: 14, kind: "bar", color: "#5a3312", accent: "#f3d7aa" },
+    { id: "honey", name: "a jar of honey", price: 15, kind: "jar", color: "#f0b429", accent: "#fff1c2" },
+    { id: "peanut", name: "a jar of peanut butter", price: 20, kind: "jar", color: "#c4843a", accent: "#f6e0b8" },
+    { id: "bread", name: "a loaf of bread", price: 11, kind: "loaf", color: "#e3a45c", accent: "#8a4b1f" },
+    { id: "bananas", name: "a bunch of bananas", price: 9, kind: "bananas", color: "#f2d230", accent: "#6d4a12" },
+    { id: "grapes", name: "a bunch of grapes", price: 13, kind: "grapes", color: "#7b2d8e", accent: "#e7c0ef" }
+  ];
+
+  var GEAR = {
+    shoes: { cost: 40, title: "Fast shoes", detail: "You move faster." },
+    basket: { cost: 55, title: "Bigger basket", detail: "You carry more food and score more." },
+    scanner: { cost: 75, title: "Scanner", detail: "Food on your list glows." }
+  };
+  var GEAR_ORDER = ["shoes", "basket", "scanner"];
+
+  var state = "title";
+  var level = 1;
+  var xp = 0;
+  var xpNeed = 70;
+  var coins = 0;
+  var score = 0;
+  var owned = { shoes: false, basket: false, scanner: false };
+  var runsDone = 0;
+  var runScores = [];
+  var deck = [];
+  var list = [];
+  var items = [];
+  var parts = [];
+  var floats = [];
+  var lives = 3;
+  var carried = 0;
+  var totalCollected = 0;
+  var runScore = 0;
+  var runFoodCoins = 0;
+  var timeLeft = 50;
+  var intro = 0;
+  var ending = false;
+  var endTimer = 0;
+  var endMsg = "";
+  var runClosed = false;
+  var listBonusGiven = false;
+  var slowT = 0;
+  var safeT = 0;
+  var shake = 0;
+  var hurtT = 0;
+  var spawnT = 0;
+  var speechLock = 0;
+  var speechText = "";
+  var needPlace = false;
+  var fieldReady = false;
+  var facing = "up";
+  var moving = false;
+  var player = { x: 400, y: 300 };
+  var keys = { left: false, right: false, up: false, down: false };
+  var viewW = 800;
+  var viewH = 500;
+  var U = 1;
+  var time = 0;
+  var lastTs = 0;
+  var soundOn = true;
+  var audioCtx = null;
+  var reduceMotion = false;
+  var shopUps = 0;
+  var shopExtra = 0;
+  var shopPer = 0;
+  var shopListPay = 0;
+  var lastSpeech = "";
+
+  function $(id) { return document.getElementById(id); }
+
+  function shuffle(listIn) {
+    var a = listIn.slice();
+    var i, j, tmp;
+    for (i = a.length - 1; i > 0; i--) {
+      j = Math.floor(Math.random() * (i + 1));
+      tmp = a[i];
+      a[i] = a[j];
+      a[j] = tmp;
+    }
+    return a;
+  }
+
+  function priceWords(n) {
+    var ones = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"];
+    var tens = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"];
+    n = Math.round(n);
+    if (n < 0) n = 0;
+    if (n > 99) n = 99;
+    if (n < 20) return ones[n];
+    var t = Math.floor(n / 10);
+    var o = n % 10;
+    if (o === 0) return tens[t];
+    return tens[t] + "-" + ones[o];
+  }
+
+  function moneyLine(n) {
+    return "It's " + priceWords(n) + " dollars.";
+  }
+
+  function ac() {
+    if (!soundOn) return null;
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return null;
+    if (!audioCtx) audioCtx = new AC();
+    if (audioCtx.state === "suspended") audioCtx.resume();
+    return audioCtx;
+  }
+
+  function tone(freq, dur, delay, type) {
+    try {
+      var ctx = ac();
+      if (!ctx) return;
+      var t = ctx.currentTime + (delay || 0);
+      var o = ctx.createOscillator();
+      var g = ctx.createGain();
+      o.type = type || "square";
+      o.frequency.setValueAtTime(freq, t);
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.05, t + 0.015);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + Math.max(0.04, dur));
+      o.connect(g);
+      g.connect(ctx.destination);
+      o.start(t);
+      o.stop(t + dur + 0.02);
+    } catch (err) {}
+  }
+
+  function capacity() {
+    return owned.basket ? 9 : 5;
+  }
+
+  function itemSpeed() {
+    return Math.max(48, viewH * 0.11) * (1 + (level - 1) * 0.18);
+  }
+
+  function moveSpeed() {
+    var s = Math.max(220, viewH * 0.48);
+    if (owned.shoes) s *= 1.5;
+    if (slowT > 0) s *= 0.4;
+    return s;
+  }
+
+  function shelfWidth() {
+    var sw = Math.round(Math.max(44, Math.min(120, viewW * 0.13)));
+    if (viewW - sw * 2 < 160) sw = Math.max(24, Math.floor((viewW - 160) / 2));
+    return sw;
+  }
+
+  function aisleLeft() { return shelfWidth(); }
+  function aisleRight() { return viewW - shelfWidth(); }
+
+  function isListed(id) {
+    var i;
+    for (i = 0; i < list.length; i++) if (list[i].food.id === id) return true;
+    return false;
+  }
+
+  function listEntry(id) {
+    var i;
+    for (i = 0; i < list.length; i++) if (list[i].food.id === id) return list[i];
+    return null;
+  }
+
+  function allGot() {
+    var i;
+    if (!list.length) return false;
+    for (i = 0; i < list.length; i++) if (!list[i].got) return false;
+    return true;
+  }
+
+  function customerLine() {
+    var i, name;
+    if (allGot() && carried >= capacity()) return "List complete. Your basket is full. Dodge the other food.";
+    if (allGot()) return "List complete. Fill your basket.";
+    for (i = 0; i < list.length; i++) {
+      if (!list[i].got) {
+        name = list[i].food.name;
+        if (list[i].pattern === "like") return "I'd like " + name + ", please.";
+        return "Can I have " + name + ", please?";
+      }
+    }
+    return "Grab the food on your list.";
+  }
+
+  function currentSpeech() {
+    if (intro > 0.75) return "Ready?";
+    if (intro > 0) return "Go!";
+    if (ending && endMsg) return endMsg;
+    if (speechLock > 0 && speechText) return speechText;
+    return customerLine();
+  }
+
+  function say(text, seconds) {
+    speechText = text;
+    speechLock = seconds;
+  }
+
+  function gearBits() {
+    var partsOut = [];
+    if (owned.shoes) partsOut.push("fast shoes");
+    if (owned.basket) partsOut.push("a bigger basket");
+    if (owned.scanner) partsOut.push("a scanner");
+    return partsOut;
+  }
+
+  function gearSentence() {
+    var partsOut = gearBits();
+    if (!partsOut.length) return "You do not own any gear yet.";
+    if (partsOut.length === 1) return "You own " + partsOut[0] + ".";
+    if (partsOut.length === 2) return "You own " + partsOut[0] + " and " + partsOut[1] + ".";
+    return "You own " + partsOut[0] + ", " + partsOut[1] + " and " + partsOut[2] + ".";
+  }
+
+  function gearShort() {
+    var bits = [];
+    if (owned.shoes) bits.push("Fast shoes");
+    if (owned.basket) bits.push("Bigger basket");
+    if (owned.scanner) bits.push("Scanner");
+    if (!bits.length) return "No gear yet. Buy some after this rush.";
+    return "Gear: " + bits.join(", ") + ".";
+  }
+
+  function clearKeys() {
+    keys.left = false;
+    keys.right = false;
+    keys.up = false;
+    keys.down = false;
+    var ids = ["btn-up", "btn-down", "btn-left", "btn-right"];
+    var i, b;
+    for (i = 0; i < ids.length; i++) {
+      b = $(ids[i]);
+      if (b) b.classList.remove("held");
+    }
+  }
+
+  function setState(next) {
+    state = next;
+    document.body.className = "mode-" + next;
+  }
+
+  function newGame() {
+    score = 0;
+    coins = 0;
+    level = 1;
+    xp = 0;
+    xpNeed = 70;
+    owned = { shoes: false, basket: false, scanner: false };
+    runsDone = 0;
+    runScores = [];
+    deck = shuffle(FOODS.slice());
+    lives = 3;
+    carried = 0;
+    totalCollected = 0;
+    runScore = 0;
+    runFoodCoins = 0;
+    timeLeft = 50;
+    items = [];
+    parts = [];
+    floats = [];
+    list = [];
+    clearKeys();
+  }
+
+  function dealList() {
+    if (deck.length < 3) deck = shuffle(FOODS.slice());
+    var patterns = shuffle(["can", "like", Math.random() < 0.5 ? "can" : "like"]);
+    var made = [];
+    var i;
+    for (i = 0; i < 3; i++) {
+      made.push({ food: deck.pop(), got: false, pattern: patterns[i] });
+    }
+    return made;
+  }
+
+  function listedFoods(onlyMissing) {
+    var out = [];
+    var i;
+    for (i = 0; i < list.length; i++) {
+      if (!onlyMissing || !list[i].got) out.push(list[i].food);
+    }
+    return out;
+  }
+
+  function pickFood() {
+    var missing = listedFoods(true);
+    var useList = missing.length ? missing : listedFoods(false);
+    var bias = missing.length ? 0.72 : 0.5;
+    var guard, f;
+    if (Math.random() < bias && useList.length) {
+      return useList[Math.floor(Math.random() * useList.length)];
+    }
+    guard = 0;
+    f = FOODS[Math.floor(Math.random() * FOODS.length)];
+    while (isListed(f.id) && guard < 12) {
+      f = FOODS[Math.floor(Math.random() * FOODS.length)];
+      guard++;
+    }
+    return f;
+  }
+
+  function randAisleX() {
+    var left = aisleLeft() + 48 * U;
+    var right = aisleRight() - 48 * U;
+    if (right <= left + 10) return (aisleLeft() + aisleRight()) / 2;
+    return left + Math.random() * (right - left);
+  }
+
+  function spawnItem(y, sitting) {
+    if (items.length >= 5) return;
+    var food = pickFood();
+    var x = randAisleX();
+    var tries = 0;
+    while (tries < 10) {
+      var crowded = Math.abs(x - player.x) < 90 && Math.abs(y - player.y) < 90;
+      var n;
+      for (n = 0; n < items.length; n++) {
+        if (Math.abs(items[n].x - x) < 150 && Math.abs(items[n].y - y) < 78) crowded = true;
+      }
+      if (!crowded) break;
+      x = randAisleX();
+      tries++;
+    }
+    items.push({
+      food: food,
+      x: x,
+      y: y,
+      vy: sitting ? 0 : itemSpeed(),
+      sit: sitting ? 5 + Math.random() * 3 : 0,
+      phase: Math.random() * 6.28,
+      harmless: false
+    });
+  }
+
+  function placeRun() {
+    var i, y;
+    needPlace = false;
+    player.x = (aisleLeft() + aisleRight()) / 2;
+    player.y = viewH * 0.72;
+    items = [];
+    for (i = 0; i < 4; i++) {
+      y = viewH * (0.16 + i * 0.16);
+      spawnItem(y, i % 2 === 0);
+    }
+  }
+
+  function roundRect(ctx, x, y, w, h, r) {
+    var rr = Math.min(r, Math.abs(w) / 2, Math.abs(h) / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + rr, y);
+    ctx.arcTo(x + w, y, x + w, y + h, rr);
+    ctx.arcTo(x + w, y + h, x, y + h, rr);
+    ctx.arcTo(x, y + h, x, y, rr);
+    ctx.arcTo(x, y, x + w, y, rr);
+    ctx.closePath();
+  }
+
+  function paintShape(ctx) {
+    ctx.fill();
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = "#ffffff";
+    ctx.stroke();
+    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = "#161616";
+    ctx.stroke();
+  }
+
+  function drawFood(ctx, food, x, y, scale) {
+    var s = scale || 1;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(s, s);
+    ctx.lineJoin = "round";
+    ctx.lineCap = "round";
+    if (food.kind === "carton") {
+      ctx.fillStyle = food.color;
+      roundRect(ctx, -16, -22, 32, 46, 3);
+      paintShape(ctx);
+      ctx.fillStyle = food.accent;
+      ctx.fillRect(-16, -4, 32, 12);
+      ctx.beginPath();
+      ctx.moveTo(-16, -22);
+      ctx.lineTo(0, -34);
+      ctx.lineTo(16, -22);
+      ctx.closePath();
+      ctx.fillStyle = "#f7f7f2";
+      paintShape(ctx);
+    } else if (food.kind === "tin") {
+      ctx.fillStyle = food.color;
+      roundRect(ctx, -16, -14, 32, 34, 4);
+      paintShape(ctx);
+      ctx.fillStyle = food.accent;
+      ctx.beginPath();
+      ctx.ellipse(0, -14, 16, 7, 0, 0, Math.PI * 2);
+      paintShape(ctx);
+      ctx.fillStyle = "#f7f7f2";
+      ctx.beginPath();
+      ctx.ellipse(0, -14, 8, 3.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (food.kind === "packet") {
+      ctx.fillStyle = food.color;
+      ctx.beginPath();
+      ctx.moveTo(-18, -6);
+      ctx.lineTo(-14, -24);
+      ctx.lineTo(14, -24);
+      ctx.lineTo(18, -6);
+      ctx.lineTo(16, 26);
+      ctx.lineTo(-16, 26);
+      ctx.closePath();
+      paintShape(ctx);
+      ctx.fillStyle = food.accent;
+      ctx.fillRect(-12, -2, 24, 10);
+    } else if (food.kind === "bar") {
+      ctx.fillStyle = food.accent;
+      roundRect(ctx, -22, -16, 44, 32, 4);
+      paintShape(ctx);
+      ctx.fillStyle = food.color;
+      roundRect(ctx, -16, -10, 14, 10, 2);
+      ctx.fill();
+      roundRect(ctx, 2, -10, 14, 10, 2);
+      ctx.fill();
+      roundRect(ctx, -16, 2, 14, 10, 2);
+      ctx.fill();
+      roundRect(ctx, 2, 2, 14, 10, 2);
+      ctx.fill();
+    } else if (food.kind === "jar") {
+      ctx.fillStyle = "#dedad2";
+      roundRect(ctx, -12, -28, 24, 10, 2);
+      paintShape(ctx);
+      ctx.fillStyle = food.color;
+      ctx.beginPath();
+      ctx.moveTo(-14, -18);
+      ctx.lineTo(-17, 18);
+      ctx.quadraticCurveTo(0, 30, 17, 18);
+      ctx.lineTo(14, -18);
+      ctx.closePath();
+      paintShape(ctx);
+      ctx.fillStyle = "rgba(255,255,255,0.45)";
+      roundRect(ctx, -8, -8, 6, 16, 2);
+      ctx.fill();
+    } else if (food.kind === "loaf") {
+      ctx.fillStyle = food.color;
+      ctx.beginPath();
+      ctx.ellipse(0, 2, 26, 16, 0, 0, Math.PI * 2);
+      paintShape(ctx);
+      ctx.strokeStyle = food.accent;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(-12, 2);
+      ctx.lineTo(-6, -4);
+      ctx.moveTo(0, 4);
+      ctx.lineTo(0, -6);
+      ctx.moveTo(10, 2);
+      ctx.lineTo(15, -3);
+      ctx.stroke();
+    } else if (food.kind === "bananas") {
+      ctx.strokeStyle = "#161616";
+      ctx.lineWidth = 8;
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.moveTo(-16, 14);
+      ctx.quadraticCurveTo(-10, -18, 10, -4);
+      ctx.moveTo(-8, 16);
+      ctx.quadraticCurveTo(0, -16, 18, 0);
+      ctx.moveTo(-2, 16);
+      ctx.quadraticCurveTo(8, -10, 20, 8);
+      ctx.stroke();
+      ctx.strokeStyle = food.color;
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.moveTo(-16, 14);
+      ctx.quadraticCurveTo(-10, -18, 10, -4);
+      ctx.moveTo(-8, 16);
+      ctx.quadraticCurveTo(0, -16, 18, 0);
+      ctx.moveTo(-2, 16);
+      ctx.quadraticCurveTo(8, -10, 20, 8);
+      ctx.stroke();
+      ctx.fillStyle = food.accent;
+      ctx.beginPath();
+      ctx.arc(-12, 16, 4, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (food.kind === "grapes") {
+      var spots = [[0, -8], [-8, 0], [8, 0], [-4, 8], [4, 8], [0, 16]];
+      var g;
+      ctx.fillStyle = food.color;
+      for (g = 0; g < spots.length; g++) {
+        ctx.beginPath();
+        ctx.arc(spots[g][0], spots[g][1], 7, 0, Math.PI * 2);
+        paintShape(ctx);
+      }
+      ctx.fillStyle = food.accent;
+      ctx.beginPath();
+      ctx.moveTo(0, -16);
+      ctx.lineTo(10, -26);
+      ctx.lineTo(-2, -18);
+      ctx.closePath();
+      paintShape(ctx);
+    }
+    ctx.restore();
+  }
+
+  function drawShopper(ctx, x, y, dir, scale, movingFlag, badge) {
+    var s = scale;
+    var fx = 0;
+    var fy = 1;
+    var hx, hy, bw, bh, bx, by;
+    if (dir === "up") fy = -1;
+    if (dir === "left") { fx = -1; fy = 0; }
+    if (dir === "right") { fx = 1; fy = 0; }
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.fillStyle = "rgba(0,0,0,0.28)";
+    ctx.beginPath();
+    ctx.ellipse(0, 20 * s, 18 * s, 8 * s, 0, 0, Math.PI * 2);
+    ctx.fill();
+    if (movingFlag && owned.shoes && slowT <= 0) {
+      ctx.strokeStyle = "#ffd23f";
+      ctx.lineWidth = 3 * s;
+      ctx.beginPath();
+      ctx.moveTo(-fx * 18 * s - fy * 12 * s, -fy * 18 * s + fx * 12 * s);
+      ctx.lineTo(-fx * 34 * s - fy * 12 * s, -fy * 34 * s + fx * 12 * s);
+      ctx.moveTo(-fx * 18 * s + fy * 12 * s, -fy * 18 * s - fx * 12 * s);
+      ctx.lineTo(-fx * 36 * s + fy * 12 * s, -fy * 36 * s - fx * 12 * s);
+      ctx.stroke();
+    }
+    ctx.fillStyle = owned.shoes ? "#ff4d00" : "#222222";
+    ctx.beginPath();
+    ctx.ellipse(-8 * s, 14 * s, owned.shoes ? 8 * s : 6 * s, 4.5 * s, 0, 0, Math.PI * 2);
+    ctx.ellipse(8 * s, 14 * s, owned.shoes ? 8 * s : 6 * s, 4.5 * s, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = "#111";
+    ctx.stroke();
+    if (owned.shoes) {
+      ctx.strokeStyle = "#fff";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(-14 * s, 14 * s);
+      ctx.lineTo(-2 * s, 14 * s);
+      ctx.moveTo(2 * s, 14 * s);
+      ctx.lineTo(14 * s, 14 * s);
+      ctx.stroke();
+    }
+    ctx.fillStyle = "#0b3d91";
+    roundRect(ctx, -12 * s, -8 * s, 24 * s, 26 * s, 8 * s);
+    ctx.fill();
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = "#fff";
+    ctx.stroke();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = "#111";
+    ctx.stroke();
+    hx = fx * 10 * s;
+    hy = fy * 8 * s - 12 * s;
+    ctx.fillStyle = "#2b2118";
+    ctx.beginPath();
+    ctx.arc(hx, hy, 11 * s, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#f0c7a0";
+    ctx.beginPath();
+    ctx.arc(hx + fx * 2 * s, hy + fy * 2 * s, 9 * s, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = "#111";
+    ctx.stroke();
+    ctx.fillStyle = "#161616";
+    ctx.beginPath();
+    ctx.arc(hx + fx * 4 * s - fy * 3 * s, hy + fy * 3 * s + fx * 3 * s, 1.4 * s, 0, Math.PI * 2);
+    ctx.arc(hx + fx * 4 * s + fy * 3 * s, hy + fy * 3 * s - fx * 3 * s, 1.4 * s, 0, Math.PI * 2);
+    ctx.fill();
+    if (owned.scanner) {
+      ctx.fillStyle = "#67e8f9";
+      roundRect(ctx, hx - 11 * s, hy - 1 * s, 22 * s, 7 * s, 3 * s);
+      ctx.fill();
+      ctx.strokeStyle = "#111";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(hx + 8 * s, hy - 8 * s);
+      ctx.lineTo(hx + 16 * s, hy - 18 * s);
+      ctx.stroke();
+      ctx.fillStyle = Math.floor(time * 4) % 2 === 0 ? "#ff2d2d" : "#7a1010";
+      ctx.beginPath();
+      ctx.arc(hx + 16 * s, hy - 20 * s, 3 * s, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    bw = (owned.basket ? 30 : 18) * s;
+    bh = (owned.basket ? 20 : 13) * s;
+    bx = fx * 22 * s;
+    by = fy * 18 * s + 6 * s;
+    ctx.fillStyle = owned.basket ? "#e07a2f" : "#8a5a32";
+    roundRect(ctx, bx - bw / 2, by - bh / 2, bw, bh, 4 * s);
+    ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = "#111";
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(bx, by - bh / 2, bw * 0.32, Math.PI, 0);
+    ctx.stroke();
+    if (badge !== undefined && badge !== null && badge !== "") {
+      ctx.font = "800 " + Math.round(12 * s) + "px system-ui, Segoe UI, Roboto, Helvetica, Arial, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = "#fff";
+      ctx.strokeText(String(badge), bx, by + 1);
+      ctx.fillStyle = "#111";
+      ctx.fillText(String(badge), bx, by + 1);
+    }
+    ctx.restore();
+  }
+
+  function drawIcon(ctx, kind) {
+    ctx.save();
+    ctx.clearRect(0, 0, 120, 80);
+    ctx.translate(60, 42);
+    ctx.lineJoin = "round";
+    ctx.lineCap = "round";
+    if (kind === "shoes") {
+      ctx.fillStyle = "#ff4d00";
+      ctx.beginPath();
+      ctx.ellipse(-16, 4, 16, 9, -0.3, 0, Math.PI * 2);
+      paintShape(ctx);
+      ctx.beginPath();
+      ctx.ellipse(16, 4, 16, 9, 0.3, 0, Math.PI * 2);
+      paintShape(ctx);
+      ctx.strokeStyle = "#fff";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(-26, 4);
+      ctx.lineTo(-8, 4);
+      ctx.moveTo(8, 4);
+      ctx.lineTo(26, 4);
+      ctx.stroke();
+    } else if (kind === "basket") {
+      ctx.fillStyle = "#e07a2f";
+      roundRect(ctx, -24, -8, 48, 26, 6);
+      paintShape(ctx);
+      ctx.strokeStyle = "#111";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(0, -8, 16, Math.PI, 0);
+      ctx.stroke();
+    } else {
+      ctx.fillStyle = "#16324f";
+      roundRect(ctx, -22, -16, 44, 28, 6);
+      paintShape(ctx);
+      ctx.fillStyle = "#67e8f9";
+      roundRect(ctx, -14, -6, 28, 8, 3);
+      ctx.fill();
+      ctx.strokeStyle = "#111";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(12, -16);
+      ctx.lineTo(22, -30);
+      ctx.stroke();
+      ctx.fillStyle = "#ff2d2d";
+      ctx.beginPath();
+      ctx.arc(22, -32, 4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function drawLabel(ctx, text, x, y, hot) {
+    var maxW = Math.max(90, (aisleRight() - aisleLeft()) - 12);
+    var size = Math.round(Math.max(14, Math.min(18, 16 * U)));
+    var tw, w, h, left;
+    ctx.font = "700 " + size + "px system-ui, Segoe UI, Roboto, Helvetica, Arial, sans-serif";
+    while (size > 11 && ctx.measureText(text).width > maxW - 14) {
+      size -= 1;
+      ctx.font = "700 " + size + "px system-ui, Segoe UI, Roboto, Helvetica, Arial, sans-serif";
+    }
+    tw = ctx.measureText(text).width;
+    w = tw + 14;
+    h = size + 10;
+    left = x - w / 2;
+    if (left < 4) left = 4;
+    if (left + w > viewW - 4) left = viewW - 4 - w;
+    if (y < 4) y = 4;
+    if (y + h > viewH - 4) y = viewH - 4 - h;
+    ctx.fillStyle = hot ? "#ffe14a" : "#ffffff";
+    ctx.strokeStyle = "#111111";
+    ctx.lineWidth = 2;
+    roundRect(ctx, left, y, w, h, 6);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = "#111111";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(text, left + w / 2, y + h / 2 + 1);
+  }
+
+  function drawShelves(ctx) {
+    var sw = shelfWidth();
+    drawSide(0, sw);
+    drawSide(viewW - sw, sw);
+    function drawSide(x, width) {
+      var rows = 4;
+      var r, i, y, bw, gap, colors;
+      ctx.fillStyle = "#5c3317";
+      ctx.fillRect(x, 0, width, viewH);
+      ctx.strokeStyle = "#2a160b";
+      ctx.lineWidth = 4;
+      ctx.strokeRect(x + 2, 2, width - 4, viewH - 4);
+      colors = ["#d23b3b", "#f0b429", "#1f7a46", "#7a3e9d", "#e3a45c", "#0b3d91"];
+      for (r = 0; r < rows; r++) {
+        y = (r + 1) * viewH / (rows + 0.4);
+        ctx.fillStyle = "#8a5a32";
+        ctx.fillRect(x + 6, y, width - 12, 8);
+        bw = Math.max(8, (width - 24) / 3);
+        for (i = 0; i < 3; i++) {
+          ctx.fillStyle = colors[(r + i) % colors.length];
+          gap = x + 8 + i * (bw + 2);
+          ctx.fillRect(gap, y - 22, bw - 2, 20);
+        }
+      }
+    }
+  }
+
+  function drawFloor(ctx) {
+    var left = aisleLeft();
+    var right = aisleRight();
+    var size = 42;
+    var x, y, odd;
+    ctx.fillStyle = "#e7d3a8";
+    ctx.fillRect(left, 0, Math.max(0, right - left), viewH);
+    for (y = 0; y < viewH; y += size) {
+      for (x = left; x < right; x += size) {
+        odd = ((Math.floor(x / size) + Math.floor(y / size)) % 2) === 0;
+        ctx.fillStyle = odd ? "#efd8b0" : "#e2c89a";
+        ctx.fillRect(x, y, Math.min(size, right - x), Math.min(size, viewH - y));
+      }
+    }
+    ctx.strokeStyle = "rgba(90, 60, 10, 0.85)";
+    ctx.lineWidth = 4;
+    ctx.setLineDash([16, 12]);
+    ctx.beginPath();
+    ctx.moveTo(left + 8, 0);
+    ctx.lineTo(left + 8, viewH);
+    ctx.moveTo(right - 8, 0);
+    ctx.lineTo(right - 8, viewH);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  function drawBanner(ctx, text) {
+    var size = Math.round(Math.max(36, Math.min(78, viewW * 0.08)));
+    ctx.font = "900 " + size + "px system-ui, Segoe UI, Roboto, Helvetica, Arial, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.lineWidth = 10;
+    ctx.strokeStyle = "#111";
+    ctx.strokeText(text, viewW / 2, viewH / 2);
+    ctx.fillStyle = "#ffd23f";
+    ctx.fillText(text, viewW / 2, viewH / 2);
+  }
+
+  function burst(x, y, color) {
+    var i, a, v;
+    if (reduceMotion) return;
+    for (i = 0; i < 12; i++) {
+      a = Math.random() * 6.28;
+      v = 40 + Math.random() * 140;
+      parts.push({ x: x, y: y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 0.45, color: color });
+    }
+    if (parts.length > 100) parts.splice(0, parts.length - 80);
+  }
+
+  function goalClass(i) {
+    var j;
+    if (list[i].got) return "goal got";
+    for (j = 0; j < list.length; j++) {
+      if (!list[j].got) return j === i ? "goal now" : "goal";
+    }
+    return "goal";
+  }
+
+  function buildList() {
+    var root = $("list");
+    var html = "<h2>Shopping list</h2>";
+    var i, canvases, ctx, id, food;
+    for (i = 0; i < list.length; i++) {
+      html += "<article class=\"" + goalClass(i) + "\">";
+      html += "<canvas width=\"76\" height=\"56\" data-id=\"" + list[i].food.id + "\"></canvas>";
+      html += "<div><strong>" + list[i].food.name + "</strong>";
+      html += "<em>" + (list[i].got ? "Got it" : "Find it") + "</em></div></article>";
+    }
+    html += "<p class=\"cap\">Basket holds " + capacity() + " things.</p>";
+    html += "<p class=\"cap\">" + gearShort() + "</p>";
+    root.innerHTML = html;
+    canvases = root.getElementsByTagName("canvas");
+    for (i = 0; i < canvases.length; i++) {
+      id = canvases[i].getAttribute("data-id");
+      food = null;
+      var f;
+      for (f = 0; f < FOODS.length; f++) if (FOODS[f].id === id) food = FOODS[f];
+      ctx = canvases[i].getContext("2d");
+      if (food && ctx) drawFood(ctx, food, 38, 32, 0.7);
+    }
+  }
+
+  function syncList() {
+    var arts = $("list").getElementsByTagName("article");
+    var i, em;
+    for (i = 0; i < list.length && i < arts.length; i++) {
+      arts[i].className = goalClass(i);
+      em = arts[i].getElementsByTagName("em")[0];
+      if (em) em.textContent = list[i].got ? "Got it" : "Find it";
+    }
+  }
+
+  function paintLives() {
+    var root = $("hud-lives");
+    var dots = root.getElementsByTagName("i");
+    var i;
+    for (i = 0; i < dots.length; i++) dots[i].className = i < lives ? "on" : "";
+  }
+
+  function paintHud() {
+    var pct, tPct, rushLabel;
+    $("hud-level").textContent = "Level " + level;
+    $("hud-xp").textContent = "XP " + xp + "/" + xpNeed;
+    pct = xpNeed > 0 ? Math.floor(xp / xpNeed * 100) : 0;
+    if (pct < 0) pct = 0;
+    if (pct > 100) pct = 100;
+    $("xp-fill").style.width = pct + "%";
+    $("hud-coins").textContent = "Coins " + coins;
+    $("hud-score").textContent = "Score " + score;
+    $("hud-basket").textContent = "Basket " + carried + "/" + capacity();
+    rushLabel = "Ready";
+    if (state === "play") rushLabel = "Rush " + (runsDone + 1) + " of 3";
+    else if (state === "shop") rushLabel = "Shop";
+    else if (state === "results") rushLabel = "Results";
+    $("hud-rush").textContent = rushLabel;
+    paintLives();
+    tPct = timeLeft / 50 * 100;
+    if (tPct < 0) tPct = 0;
+    if (tPct > 100) tPct = 100;
+    $("timer-fill").style.width = tPct + "%";
+    $("timer-text").textContent = String(Math.ceil(timeLeft));
+    $("timer").classList.toggle("low", state === "play" && intro <= 0 && timeLeft <= 10);
+  }
+
+  function paintSpeech() {
+    var t = currentSpeech();
+    if (t !== lastSpeech) {
+      lastSpeech = t;
+      $("speech").textContent = t;
+    }
+  }
+
+  function onGood(it, index) {
+    var entry = listEntry(it.food.id);
+    var line, justDone;
+    if (!entry) return;
+    if (entry.got && carried >= capacity()) {
+      it.harmless = true;
+      it.vy = itemSpeed() * 2.2;
+      it.sit = 0;
+      say("Your basket is full.", 1.15);
+      tone(180, 0.08, 0, "square");
+      return;
+    }
+    justDone = !entry.got;
+    entry.got = true;
+    carried += 1;
+    totalCollected += 1;
+    coins += entry.food.price;
+    runFoodCoins += entry.food.price;
+    score += 100;
+    runScore += 100;
+    xp += 18;
+    items.splice(index, 1);
+    burst(it.x, it.y, "#ffd23f");
+    floats.push({ x: it.x, y: it.y - 16, text: "+" + entry.food.price + " coins", life: 1.15 });
+    line = moneyLine(entry.food.price);
+    if (allGot() && !listBonusGiven) {
+      listBonusGiven = true;
+      score += 200;
+      runScore += 200;
+      xp += 24;
+      line = moneyLine(entry.food.price) + " List complete.";
+      tone(880, 0.1, 0.05, "square");
+    }
+    say(line, 1.8);
+    tone(justDone ? 640 : 520, 0.07, 0, "square");
+    syncList();
+  }
+
+  function onBad(it, index) {
+    if (safeT > 0) return;
+    items.splice(index, 1);
+    lives -= 1;
+    if (lives < 0) lives = 0;
+    slowT = 1.65;
+    safeT = 1.15;
+    shake = reduceMotion ? 0 : 0.32;
+    hurtT = 0.28;
+    say("That is not on the list.", 1.25);
+    tone(140, 0.16, 0, "sawtooth");
+    burst(it.x, it.y, "#ff2d2d");
+    if (lives <= 0) beginEnd("No lives left.");
+  }
+
+  function checkHits() {
+    var pr = 20 * U;
+    var reach, i, it, dx, dy;
+    reach = pr + 36 * U;
+    for (i = items.length - 1; i >= 0; i--) {
+      it = items[i];
+      if (it.harmless) continue;
+      dx = it.x - player.x;
+      dy = it.y - player.y;
+      if (dx * dx + dy * dy > reach * reach) continue;
+      if (isListed(it.food.id)) onGood(it, i);
+      else if (safeT > 0) {
+        it.harmless = true;
+        it.vy = itemSpeed() * 2;
+        it.sit = 0;
+      } else onBad(it, i);
+    }
+  }
+
+  function separateFromPlayer() {
+    var i, it, dx, dy, dist;
+    for (i = 0; i < items.length; i++) {
+      it = items[i];
+      dx = it.x - player.x;
+      dy = it.y - player.y;
+      dist = Math.sqrt(dx * dx + dy * dy) || 1;
+      if (dist < 100) {
+        it.x = player.x + (dx / dist) * 110;
+        it.y = player.y + (dy / dist) * 110;
+      }
+    }
+  }
+
+  function pushApart() {
+    var a, b, dx, dy, d, min, push, nx, ny;
+    min = 100 * U;
+    for (a = 0; a < items.length; a++) {
+      for (b = a + 1; b < items.length; b++) {
+        dx = items[b].x - items[a].x;
+        dy = items[b].y - items[a].y;
+        d = Math.sqrt(dx * dx + dy * dy) || 0.01;
+        if (d < min) {
+          push = (min - d) / 2;
+          nx = dx / d;
+          ny = dy / d;
+          items[a].x -= nx * push;
+          items[b].x += nx * push;
+          items[a].y -= ny * push * 0.25;
+          items[b].y += ny * push * 0.25;
+        }
+      }
+    }
+  }
+
+  function clampItems() {
+    var i, it, left, right;
+    left = aisleLeft() + 36 * U;
+    right = aisleRight() - 36 * U;
+    for (i = 0; i < items.length; i++) {
+      it = items[i];
+      if (right > left) {
+        if (it.x < left) it.x = left;
+        if (it.x > right) it.x = right;
+      }
+    }
+  }
+
+  function updateItems(dt) {
+    var i, it;
+    for (i = items.length - 1; i >= 0; i--) {
+      it = items[i];
+      if (it.sit > 0) {
+        it.sit -= dt;
+        if (it.sit <= 0) it.vy = itemSpeed();
+      }
+      it.y += it.vy * dt;
+      if (it.vy !== 0) it.x += Math.sin(time * 1.5 + it.phase) * 14 * dt;
+      if (it.y > viewH + 70) items.splice(i, 1);
+    }
+    pushApart();
+    clampItems();
+  }
+
+  function updateFx(dt) {
+    var i;
+    for (i = floats.length - 1; i >= 0; i--) {
+      floats[i].life -= dt;
+      floats[i].y -= 28 * dt;
+      if (floats[i].life <= 0) floats.splice(i, 1);
+    }
+    for (i = parts.length - 1; i >= 0; i--) {
+      parts[i].life -= dt;
+      parts[i].x += parts[i].vx * dt;
+      parts[i].y += parts[i].vy * dt;
+      if (parts[i].life <= 0) parts.splice(i, 1);
+    }
+  }
+
+  function movePlayer(dt) {
+    var dx = 0;
+    var dy = 0;
+    var sp, margin, left, right, top, bot;
+    if (keys.left) dx -= 1;
+    if (keys.right) dx += 1;
+    if (keys.up) dy -= 1;
+    if (keys.down) dy += 1;
+    moving = dx !== 0 || dy !== 0;
+    if (dx !== 0 && dy !== 0) {
+      dx *= 0.7071;
+      dy *= 0.7071;
+    }
+    if (dx < 0) facing = "left";
+    else if (dx > 0) facing = "right";
+    else if (dy < 0) facing = "up";
+    else if (dy > 0) facing = "down";
+    sp = moveSpeed();
+    player.x += dx * sp * dt;
+    player.y += dy * sp * dt;
+    margin = 26 * U;
+    left = aisleLeft() + margin;
+    right = aisleRight() - margin;
+    top = 18;
+    bot = viewH - margin;
+    if (right > left) {
+      if (player.x < left) player.x = left;
+      if (player.x > right) player.x = right;
+    }
+    if (player.y < top) player.y = top;
+    if (player.y > bot) player.y = bot;
+  }
+
+  function beginEnd(msg) {
+    if (ending) return;
+    ending = true;
+    endTimer = 1.35;
+    endMsg = msg;
+    say(msg, 2);
+    tone(200, 0.16, 0, "sawtooth");
+    tone(140, 0.2, 0.1, "sawtooth");
+  }
+
+  function applyLevelUps() {
+    var ups = 0;
+    while (xp >= xpNeed && level < 8) {
+      xp -= xpNeed;
+      level += 1;
+      xpNeed += 30;
+      ups += 1;
+    }
+    return ups;
+  }
+
+  function finishRun() {
+    var per, extra, listPay;
+    if (runClosed) return;
+    runClosed = true;
+    clearKeys();
+    listPay = listBonusGiven ? 15 : 0;
+    per = (level - 1) * 3;
+    extra = carried * per;
+    coins += listPay + extra;
+    shopListPay = listPay;
+    shopPer = per;
+    shopExtra = extra;
+    runsDone += 1;
+    runScores.push(runScore);
+    shopUps = applyLevelUps();
+    if (shopUps > 0) {
+      tone(523, 0.1, 0, "square");
+      tone(659, 0.1, 0.1, "square");
+      tone(784, 0.16, 0.2, "square");
+    }
+    if (runsDone >= 3) showResults();
+    else showShop();
+  }
+
+  function update(dt) {
+    var every, prev;
+    if (!fieldReady) return;
+    if (needPlace) placeRun();
+    if (speechLock > 0) speechLock -= dt;
+    if (intro > 0) {
+      prev = intro;
+      intro -= dt;
+      movePlayer(dt);
+      if (prev > 0.75 && intro <= 0.75) tone(440, 0.08, 0, "square");
+      if (intro <= 0) {
+        intro = 0;
+        safeT = 0.55;
+        separateFromPlayer();
+        tone(700, 0.12, 0, "square");
+      }
+      return;
+    }
+    if (ending) {
+      updateFx(dt);
+      endTimer -= dt;
+      if (endTimer <= 0) finishRun();
+      return;
+    }
+    if (slowT > 0) slowT -= dt;
+    if (safeT > 0) safeT -= dt;
+    if (hurtT > 0) hurtT -= dt;
+    if (shake > 0) shake -= dt;
+    timeLeft -= dt;
+    if (timeLeft <= 0) {
+      timeLeft = 0;
+      beginEnd("Time is up.");
+      return;
+    }
+    movePlayer(dt);
+    updateItems(dt);
+    updateFx(dt);
+    checkHits();
+    if (ending) return;
+    spawnT -= dt;
+    every = Math.max(0.62, 1.2 - (level - 1) * 0.08);
+    if (spawnT <= 0) {
+      spawnT = every;
+      if (Math.random() < 0.28) spawnItem(70 + Math.random() * Math.max(40, viewH - 140), true);
+      else spawnItem(-40, false);
+    }
+  }
+
+  function fitPlayfield() {
+    var wrap = $("stage-wrap");
+    var canvas = $("stage");
+    var rawW = wrap.clientWidth;
+    var rawH = wrap.clientHeight;
+    var dpr, ctx;
+    fieldReady = rawW >= 80 && rawH >= 80;
+    viewW = fieldReady ? rawW : 800;
+    viewH = fieldReady ? rawH : 480;
+    U = Math.max(0.75, Math.min(1.5, Math.min(viewW, viewH) / 620));
+    dpr = Math.min(2, window.devicePixelRatio || 1);
+    if (canvas._cw !== viewW || canvas._ch !== viewH || canvas._dpr !== dpr) {
+      canvas._cw = viewW;
+      canvas._ch = viewH;
+      canvas._dpr = dpr;
+      canvas.width = Math.floor(viewW * dpr);
+      canvas.height = Math.floor(viewH * dpr);
+    }
+    ctx = canvas.getContext("2d");
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    return ctx;
+  }
+
+  function drawPlay() {
+    var ctx = fitPlayfield();
+    var canvas = $("stage");
+    var i, it, hot, f;
+    if (!ctx) return;
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.restore();
+    ctx.setTransform(canvas._dpr || 1, 0, 0, canvas._dpr || 1, 0, 0);
+    ctx.save();
+    if (shake > 0 && !reduceMotion) {
+      ctx.translate((Math.random() - 0.5) * 12 * shake, (Math.random() - 0.5) * 12 * shake);
+    }
+    drawFloor(ctx);
+    drawShelves(ctx);
+    for (i = 0; i < items.length; i++) {
+      it = items[i];
+      hot = owned.scanner && isListed(it.food.id) && !it.harmless;
+      ctx.save();
+      if (it.harmless) ctx.globalAlpha = 0.4;
+      ctx.fillStyle = "rgba(0,0,0,0.2)";
+      ctx.beginPath();
+      ctx.ellipse(it.x, it.y + 18 * U, 22 * U, 8 * U, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = hot ? "#fff6cc" : "#ffffff";
+      ctx.beginPath();
+      ctx.arc(it.x, it.y, 30 * U, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.lineWidth = hot ? 6 : 3;
+      ctx.strokeStyle = hot ? "#e2a800" : "#161616";
+      ctx.stroke();
+      if (hot) {
+        ctx.beginPath();
+        ctx.arc(it.x, it.y, 36 * U + Math.sin(time * 6 + it.phase) * 2, 0, Math.PI * 2);
+        ctx.strokeStyle = "#ffd000";
+        ctx.lineWidth = 4;
+        ctx.stroke();
+      }
+      drawFood(ctx, it.food, it.x, it.y, 0.78 * U);
+      ctx.restore();
+    }
+    ctx.save();
+    if (safeT > 0 && Math.floor(time * 12) % 2 === 0) ctx.globalAlpha = 0.45;
+    drawShopper(ctx, player.x, player.y, facing, 1.35 * U, moving && slowT <= 0, String(carried));
+    ctx.restore();
+    for (i = 0; i < parts.length; i++) {
+      ctx.globalAlpha = Math.max(0, parts[i].life * 2);
+      ctx.fillStyle = parts[i].color;
+      ctx.fillRect(parts[i].x, parts[i].y, 6, 6);
+      ctx.globalAlpha = 1;
+    }
+    for (i = 0; i < items.length; i++) {
+      it = items[i];
+      hot = owned.scanner && isListed(it.food.id) && !it.harmless;
+      if (it.y > 20 && it.y < viewH - 8) drawLabel(ctx, it.food.name, it.x, Math.min(viewH - 26, it.y + 40 * U), hot);
+    }
+    if (slowT > 0) drawLabel(ctx, "Slow", player.x, player.y - 62 * U, false);
+    for (f = 0; f < floats.length; f++) {
+      ctx.globalAlpha = Math.max(0, Math.min(1, floats[f].life));
+      ctx.font = "800 " + Math.round(18 * U) + "px system-ui, Segoe UI, Roboto, Helvetica, Arial, sans-serif";
+      var fw = ctx.measureText(floats[f].text).width + 16;
+      ctx.fillStyle = "#111";
+      ctx.fillRect(floats[f].x - fw / 2, floats[f].y - 14, fw, 28);
+      ctx.fillStyle = "#ffd23f";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(floats[f].text, floats[f].x, floats[f].y);
+      ctx.globalAlpha = 1;
+    }
+    if (lives === 1 && intro <= 0 && !ending) {
+      ctx.fillStyle = "rgba(160, 0, 0, 0.13)";
+      ctx.fillRect(0, 0, viewW, viewH);
+    }
+    if (intro > 0.75) drawBanner(ctx, "Ready?");
+    else if (intro > 0) drawBanner(ctx, "Go!");
+    else if (ending && endMsg) drawBanner(ctx, endMsg);
+    ctx.restore();
+    if (hurtT > 0) {
+      ctx.fillStyle = "rgba(255, 30, 30, " + (0.35 * (hurtT / 0.28)) + ")";
+      ctx.fillRect(0, 0, viewW, viewH);
+    }
+  }
+
+  function drawPreview() {
+    var c = $("preview");
+    var ctx, dirs, dir;
+    if (!c) return;
+    ctx = c.getContext("2d");
+    if (!ctx) return;
+    dirs = ["down", "left", "up", "right"];
+    dir = dirs[Math.floor(time / 0.7) % 4];
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.fillStyle = "#e7d3a8";
+    ctx.fillRect(0, 0, c.width, c.height);
+    ctx.fillStyle = "#5c3317";
+    ctx.fillRect(0, 0, 36, c.height);
+    ctx.fillRect(c.width - 36, 0, 36, c.height);
+    drawShopper(ctx, c.width / 2, c.height / 2 + 36 + Math.sin(time * 3) * 8, dir, 3.5, owned.shoes, "");
+  }
+
+  function shopLines() {
+    var lines = [];
+    var nextExtra = (level - 1) * 3;
+    lines.push("Rush " + runsDone + " is over. This rush score: " + runScore + ".");
+    lines.push("Coins from food: " + runFoodCoins + ". Coins now: " + coins + ".");
+    if (shopListPay > 0) lines.push("List complete: 15 extra coins.");
+    if (shopUps > 0) lines.push("Level up! You are now level " + level + ". Food will move faster.");
+    else lines.push("Level " + level + ". XP " + xp + " / " + xpNeed + ".");
+    if (shopExtra > 0) {
+      lines.push("Level pay: " + shopExtra + " extra coins. That is " + priceWords(shopPer) + " more on each food you collected.");
+    }
+    if (nextExtra > 0) lines.push("Next rush, you earn " + priceWords(nextExtra) + " extra coins on each food.");
+    else lines.push("Next rush, each food pays its price.");
+    lines.push("Buy gear, or start the next rush. Gear changes how you move, carry, or see the list.");
+    return lines;
+  }
+
+  function renderShop() {
+    var root = $("screen-shop");
+    var html = "";
+    var lines = shopLines();
+    var i, g, btn, cls, label;
+    html += "<div class=\"shop-layout\">";
+    html += "<div><h3>Your shopper</h3><canvas id=\"preview\" width=\"440\" height=\"520\"></canvas><p id=\"wear-line\"></p></div>";
+    html += "<div><h2 id=\"shop-title\" tabindex=\"-1\">Gear shop</h2><div class=\"shop-copy\">";
+    for (i = 0; i < lines.length; i++) html += "<p>" + lines[i] + "</p>";
+    html += "</div><div class=\"gear-grid\">";
+    for (i = 0; i < GEAR_ORDER.length; i++) {
+      g = GEAR_ORDER[i];
+      cls = "gear-card" + (owned[g] ? " owned" : "");
+      if (owned[g]) {
+        label = "Owned";
+        btn = "<button type=\"button\" data-buy=\"" + g + "\" disabled>Owned</button>";
+      } else if (coins < GEAR[g].cost) {
+        btn = "<button type=\"button\" data-buy=\"" + g + "\" disabled>Need more coins</button>";
+      } else {
+        btn = "<button type=\"button\" data-buy=\"" + g + "\">Buy</button>";
+      }
+      html += "<article class=\"" + cls + "\">";
+      html += "<canvas width=\"120\" height=\"80\" data-icon=\"" + g + "\"></canvas>";
+      html += "<h3>" + GEAR[g].title + "</h3>";
+      html += "<p>" + GEAR[g].detail + "</p>";
+      html += "<p class=\"cost\">" + GEAR[g].cost + " coins</p>";
+      html += btn + "</article>";
+    }
+    html += "</div>";
+    html += "<button type=\"button\" id=\"btn-next\" class=\"go-btn\">" + (runsDone >= 2 ? "Final rush" : "Next rush") + "</button>";
+    html += "</div></div>";
+    root.innerHTML = html;
+    $("wear-line").textContent = gearSentence();
+    var canvases = root.getElementsByTagName("canvas");
+    for (i = 0; i < canvases.length; i++) {
+      if (canvases[i].getAttribute("data-icon")) drawIcon(canvases[i].getContext("2d"), canvases[i].getAttribute("data-icon"));
+    }
+    $("shop-title").focus();
+  }
+
+  function showShop() {
+    setState("shop");
+    renderShop();
+  }
+
+  function resultLine() {
+    if (score >= 1600) return "Excellent. You read the labels fast.";
+    if (score >= 800) return "Good work. You can use these food words.";
+    return "Practise the food words, then rush again.";
+  }
+
+  function showResults() {
+    var root = $("results-root");
+    var rushLis = "";
+    var words = "";
+    var i;
+    setState("results");
+    for (i = 0; i < runScores.length; i++) {
+      rushLis += "<li>Rush " + (i + 1) + ": " + runScores[i] + " points</li>";
+    }
+    for (i = 0; i < FOODS.length; i++) words += "<li>" + FOODS[i].name + "</li>";
+    root.innerHTML =
+      "<div class=\"results-layout\">" +
+      "<h2 id=\"results-title\" tabindex=\"-1\">Results</h2>" +
+      "<p class=\"cheer\">" + resultLine() + "</p>" +
+      "<p class=\"big-score\">Score " + score + "</p>" +
+      "<ul class=\"stats-list\">" +
+      "<li>Level reached: " + level + "</li>" +
+      "<li>Coins left: " + coins + "</li>" +
+      "<li>Food collected: " + totalCollected + "</li>" +
+      rushLis +
+      "</ul>" +
+      "<p class=\"gear-line\">" + gearSentence() + "</p>" +
+      (shopListPay > 0 ? "<p class=\"lede\">List complete: 15 extra coins on the last rush.</p>" : "") +
+      (shopExtra > 0 ? "<p class=\"lede\">Level pay on the last rush: " + shopExtra + " extra coins.</p>" : "") +
+      "<h3>Food words</h3>" +
+      "<ul class=\"word-bank\">" + words + "</ul>" +
+      "<div class=\"examples\">" +
+      "<p>Can I have a jar of honey, please?</p>" +
+      "<p>I'd like a loaf of bread, please.</p>" +
+      "<p>It's fifteen dollars.</p>" +
+      "</div>" +
+      "<button type=\"button\" id=\"btn-again\" class=\"go-btn\">Play again</button>" +
+      "</div>";
+    $("btn-again").onclick = beginFresh;
+    $("results-title").focus();
+  }
+
+  function startRun() {
+    clearKeys();
+    list = dealList();
+    items = [];
+    floats = [];
+    parts = [];
+    carried = 0;
+    lives = 3;
+    runScore = 0;
+    runFoodCoins = 0;
+    listBonusGiven = false;
+    timeLeft = 50;
+    intro = 1.5;
+    ending = false;
+    endTimer = 0;
+    endMsg = "";
+    runClosed = false;
+    slowT = 0;
+    safeT = 0;
+    shake = 0;
+    hurtT = 0;
+    spawnT = 0.8;
+    facing = "up";
+    moving = false;
+    speechLock = 0;
+    speechText = "";
+    lastSpeech = "";
+    needPlace = true;
+    setState("play");
+    buildList();
+    tone(392, 0.08, 0, "square");
+  }
+
+  function beginFresh() {
+    newGame();
+    startRun();
+  }
+
+  function buy(kind) {
+    if (!GEAR[kind]) return;
+    if (owned[kind]) return;
+    if (coins < GEAR[kind].cost) return;
+    coins -= GEAR[kind].cost;
+    owned[kind] = true;
+    tone(523, 0.08, 0, "square");
+    tone(784, 0.12, 0.09, "square");
+    renderShop();
+  }
+
+  function onShopClick(e) {
+    var node = e.target;
+    var kind;
+    while (node && node !== e.currentTarget) {
+      if (node.tagName === "BUTTON") {
+        kind = node.getAttribute("data-buy");
+        if (kind) buy(kind);
+        if (node.id === "btn-next") startRun();
+        return;
+      }
+      node = node.parentNode;
+    }
+  }
+
+  function bindHold(id, key) {
+    var btn = $(id);
+    btn.addEventListener("pointerdown", function (e) {
+      e.preventDefault();
+      keys[key] = true;
+      btn.classList.add("held");
+      if (btn.setPointerCapture) {
+        try { btn.setPointerCapture(e.pointerId); } catch (err) {}
+      }
+    });
+    function release() {
+      keys[key] = false;
+      btn.classList.remove("held");
+    }
+    btn.addEventListener("pointerup", release);
+    btn.addEventListener("pointercancel", release);
+    btn.addEventListener("contextmenu", function (e) { e.preventDefault(); });
+  }
+
+  function bindInput() {
+    var map = { ArrowLeft: "left", ArrowRight: "right", ArrowUp: "up", ArrowDown: "down" };
+    bindHold("btn-up", "up");
+    bindHold("btn-down", "down");
+    bindHold("btn-left", "left");
+    bindHold("btn-right", "right");
+    window.addEventListener("keydown", function (e) {
+      var k = map[e.key];
+      if (!k) return;
+      if (state === "play") {
+        e.preventDefault();
+        keys[k] = true;
+      }
+    });
+    window.addEventListener("keyup", function (e) {
+      var k = map[e.key];
+      if (!k) return;
+      keys[k] = false;
+    });
+    window.addEventListener("blur", clearKeys);
+  }
+
+  function toggleSound() {
+    soundOn = !soundOn;
+    var btn = $("btn-sound");
+    btn.textContent = soundOn ? "Sound on" : "Sound off";
+    btn.setAttribute("aria-pressed", soundOn ? "true" : "false");
+    if (soundOn) tone(520, 0.08, 0, "square");
+  }
+
+  function buildMarquee() {
+    var track = $("marquee");
+    var copy, set, i, box, canvas, lab, ctx;
+    track.innerHTML = "";
+    for (copy = 0; copy < 2; copy++) {
+      set = document.createElement("div");
+      set.className = "marquee-set";
+      if (copy === 1) set.setAttribute("aria-hidden", "true");
+      for (i = 0; i < FOODS.length; i++) {
+        box = document.createElement("div");
+        box.className = "mini-card";
+        canvas = document.createElement("canvas");
+        canvas.width = 80;
+        canvas.height = 50;
+        box.appendChild(canvas);
+        lab = document.createElement("span");
+        lab.textContent = FOODS[i].name;
+        box.appendChild(lab);
+        set.appendChild(box);
+        ctx = canvas.getContext("2d");
+        if (ctx) drawFood(ctx, FOODS[i], 44, 36, 0.78);
+      }
+      track.appendChild(set);
+    }
+  }
+
+  function frame(ts) {
+    requestAnimationFrame(frame);
+    if (!lastTs) lastTs = ts;
+    var dt = (ts - lastTs) / 1000;
+    lastTs = ts;
+    if (dt < 0) dt = 0;
+    if (dt > 0.05) dt = 0.05;
+    if (document.hidden) return;
+    time += dt;
+    if (state === "play") {
+      fitPlayfield();
+      update(dt);
+      drawPlay();
+      paintSpeech();
+    } else if (state === "shop") {
+      drawPreview();
+    }
+    paintHud();
+  }
+
+  function boot() {
+    if (window.matchMedia) reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    bindInput();
+    buildMarquee();
+    newGame();
+    setState("title");
+    $("btn-start").addEventListener("click", beginFresh);
+    $("btn-sound").addEventListener("click", toggleSound);
+    $("screen-shop").addEventListener("click", onShopClick);
+    requestAnimationFrame(frame);
+  }
+
+  boot();
+})();
+</script>
+</body>
+</html>
