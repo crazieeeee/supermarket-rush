@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="color-scheme" content="dark" />
+<meta name="theme-color" content="#0a0c10" />
+<title>持倉</title>
+<style>
+  :root {
+    --bg: #0a0c10;
+    --fg: #f2f4f8;
+    --muted: #7d8796;
+    --line: #1c222c;
+    --green: #3ecf8e;
+    --red: #f2555a;
+    --soft: #141820;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", "PingFang HK", sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--sans); }
+  body { min-height: 100dvh; padding: 20px 18px 56px; }
+  .w { max-width: 420px; margin: 0 auto; }
+  @media (min-width: 720px) { .w { max-width: 560px; } }
+  .top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 22px; }
+  .top .who { font-size: .78rem; color: var(--muted); }
+  .top .when { font-size: .72rem; color: var(--muted); text-align: right; }
+  .hero { margin-bottom: 22px; }
+  .hero .lbl { font-size: .72rem; color: var(--muted); letter-spacing: .06em; }
+  .hero .nav { font-size: 1.85rem; font-weight: 680; letter-spacing: -.02em; font-variant-numeric: tabular-nums; line-height: 1.15; margin: 4px 0 6px; word-break: break-all; }
+  .hero .nav span.ccy { font-size: .9rem; font-weight: 500; color: var(--muted); margin-left: 6px; }
+  .hero .day { font-size: .95rem; font-variant-numeric: tabular-nums; }
+  .metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 18px; margin-bottom: 28px; padding-bottom: 22px; border-bottom: 1px solid var(--line); }
+  .m .lbl { font-size: .68rem; color: var(--muted); margin-bottom: 3px; }
+  .m .val { font-size: 1.05rem; font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+  .m .hint { font-size: .68rem; color: var(--muted); margin-top: 2px; }
+  .pos { color: var(--green); }
+  .neg { color: var(--red); }
+  section { margin-bottom: 26px; }
+  .sh { font-size: .72rem; color: var(--muted); letter-spacing: .05em; margin-bottom: 12px; }
+  .bars { display: flex; flex-direction: column; gap: 9px; }
+  .br { display: grid; grid-template-columns: 88px 1fr 48px; gap: 8px; align-items: center; font-size: .82rem; }
+  .br .sym { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .track { height: 6px; background: var(--soft); border-radius: 99px; overflow: hidden; }
+  .fill { height: 100%; background: #4a7fb5; border-radius: 99px; min-width: 2px; }
+  .fill.other { background: #3a4454; }
+  .pct { font-family: var(--mono); font-size: .72rem; color: var(--muted); text-align: right; }
+  .movers { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .mv { display: flex; justify-content: space-between; gap: 8px; font-size: .84rem; padding: 5px 0; font-variant-numeric: tabular-nums; }
+  .mv .s { font-weight: 600; }
+  .pies { display: grid; gap: 20px; }
+  .pie-card { display: grid; grid-template-columns: 108px 1fr; gap: 12px; align-items: center; }
+  .pie-card svg { width: 108px; height: 108px; display: block; }
+  .legend { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+  .leg { display: grid; grid-template-columns: 8px 1fr auto; gap: 7px; align-items: center; font-size: .74rem; }
+  .leg i { width: 8px; height: 8px; border-radius: 2px; display: block; }
+  .leg .n { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--fg); }
+  .leg .p { font-family: var(--mono); font-size: .68rem; color: var(--muted); }
+  details.positions { border-top: 1px solid var(--line); padding-top: 14px; }
+  details.positions > summary {
+    list-style: none; cursor: pointer; font-size: .84rem; color: var(--muted);
+    display: flex; justify-content: space-between; align-items: center; user-select: none;
+    padding: 4px 0 12px;
+  }
+  details.positions > summary::-webkit-details-marker { display: none; }
+  details.positions > summary::after { content: "＋"; font-size: .9rem; color: var(--muted); }
+  details.positions[open] > summary::after { content: "－"; }
+  .tbl { width: 100%; border-collapse: collapse; font-size: .72rem; }
+  .tbl th { color: var(--muted); font-weight: 500; text-align: right; padding: 6px 4px; border-bottom: 1px solid var(--line); }
+  .tbl td { text-align: right; padding: 8px 4px; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; vertical-align: top; }
+  .tbl th:first-child, .tbl td:first-child { text-align: left; }
+  .tbl .sym { font-weight: 650; font-size: .78rem; }
+  .tbl .desc { color: var(--muted); font-size: .65rem; font-weight: 400; display: block; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .foot { margin-top: 28px; font-size: .65rem; color: var(--muted); line-height: 1.45; }
+</style>
+</head>
+<body>
+<div class="w">
+  <div class="top">
+    <div class="who" id="who"></div>
+    <div class="when" id="when"></div>
+  </div>
+
+  <div class="hero">
+    <div class="lbl">總資產 NAV</div>
+    <div class="nav" id="nav"></div>
+    <div class="day" id="day"></div>
+  </div>
+
+  <div class="metrics">
+    <div class="m">
+      <div class="lbl">未實現損益</div>
+      <div class="val" id="upnl"></div>
+    </div>
+    <div class="m">
+      <div class="lbl">現金／保證金</div>
+      <div class="val" id="cash"></div>
+      <div class="hint" id="cashHint"></div>
+    </div>
+  </div>
+
+  <section>
+    <div class="sh">配置</div>
+    <div class="pies" id="pies"></div>
+  </section>
+
+  <section>
+    <div class="sh">持倉權重</div>
+    <div class="bars" id="weights"></div>
+  </section>
+
+  <section>
+    <div class="sh">走勢焦點</div>
+    <div class="movers">
+      <div>
+        <div class="sh" style="margin-bottom:6px">升</div>
+        <div id="gainers"></div>
+      </div>
+      <div>
+        <div class="sh" style="margin-bottom:6px">跌</div>
+        <div id="losers"></div>
+      </div>
+    </div>
+  </section>
+
+  <details class="positions">
+    <summary><span id="posSummary">全部持倉</span></summary>
+    <div style="overflow-x:auto">
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>代號</th>
+            <th>數量</th>
+            <th>市值</th>
+            <th>損益</th>
+            <th>%</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </details>
+
+  <div class="foot" id="foot"></div>
+</div>
+<script id="portfolio-data" type="application/json">{"meta": {"queryName": "Grok bot", "accountId": "U8541867", "accountName": "King Hang Chan", "baseCurrency": "HKD", "statementFrom": "2026-10-16", "statementTo": "2026-10-16", "whenGenerated": "2026-10-17 07:52:01 UTC", "period": "LastBusinessDay", "sourceFile": "/workspace/ibkr-flex-latest.xml", "generatedAt": "2026-10-17 20:04:13 HKT", "positionCount": 23}, "equity": {"reportDate": "2026-10-16", "currency": "HKD", "total": 1119504.297139523, "cash": -231335.829247186, "stock": 1311659.78508, "bonds": 37373.66712, "options": 0.0, "funds": 0.0, "commodities": 0.0, "interestAccruals": 32.737706708, "dividendAccruals": 1773.93648, "totalLong": 1351313.5062, "totalShort": -231809.209060478}, "changeInNav": {"currency": "HKD", "fromDate": "2026-10-16", "toDate": "2026-10-16", "startingValue": 1128485.535024681, "endingValue": 1119504.297139523, "mtm": -8964.0841255, "twr": -0.795866461, "dividends": 0.0, "interest": 0.0, "depositsWithdrawals": 0.0, "fxTranslation": -0.200982903}, "cash": [{"currency": "KRW", "endingCash": -3123575.56, "startingCash": -3123575.56}, {"currency": "JPY", "endingCash": -2183018.333109354, "startingCash": -2183018.333109354}, {"currency": "HKD", "endingCash": -78183.860616549, "startingCash": -78183.860616549}, {"currency": "USD", "endingCash": -3357.442436206, "startingCash": -3357.442436206}, {"currency": "CAD", "endingCash": -4.695e-06, "startingCash": -4.695e-06}], "positions": [{"symbol": "VOO", "description": "VANGUARD S&P 500 ETF", "currency": "USD", "assetCategory": "STK", "listingExchange": "ARCA", "side": "Long", "quantity": 31.0, "markPrice": 701.61, "marketValue": 21749.91, "marketValueBase": 170693.29368, "costBasis": 18294.553382, "costBasisBase": 143575.654941936, "unrealizedPnl": 3455.356618, "unrealizedPnlBase": 27117.638738063997, "fxRateToBase": 7.848, "ibkrPercentOfNav": 13.01, "reportDate": "2026-10-16", "weightPct": 15.247220945568788, "pnlPct": 18.88735158410439, "sector": "美股大盤", "region": "美國", "assetClass": "ETF"}, {"symbol": "QQQ", "description": "INVESCO QQQ TRUST SERIES 1", "currency": "USD", "assetCategory": "STK", "listingExchange": "NASDAQ", "side": "Long", "quantity": 26.0, "markPrice": 709.8, "marketValue": 18454.8, "marketValueBase": 144833.27039999998, "costBasis": 15048.750134, "costBasisBase": 118102.591051632, "unrealizedPnl": 3406.049866, "unrealizedPnlBase": 26730.679348367998, "fxRateToBase": 7.848, "ibkrPercentOfNav": 11.04, "reportDate": "2026-10-16", "weightPct": 12.93726792921363, "pnlPct": 22.63344022374742, "sector": "科技", "region": "美國", "assetClass": "ETF"}, {"symbol": "1629.T", "description": "NF TPX-17 COMML&WHSLE TRADE", "currency": "JPY", "assetCategory": "STK", "listingExchange": "TSEJ", "side": "Long", "quantity": 10000.0, "markPrice": 277.6, "marketValue": 2776000.0, "marketValueBase": 137889.472, "costBasis": 1716060.39626, "costBasisBase": 85240.15200302673, "unrealizedPnl": 1059939.60374, "unrealizedPnlBase": 52649.319996973274, "fxRateToBase": 0.049672, "ibkrPercentOfNav": 10.51, "reportDate": "2026-10-16", "weightPct": 12.317011408739143, "pnlPct": 61.765868267226686, "sector": "商業批發", "region": "日本", "assetClass": "ETF"}, {"symbol": "388", "description": "HONG KONG EXCHANGES & CLEAR", "currency": "HKD", "assetCategory": "STK", "listingExchange": "SEHK", "side": "Long", "quantity": 300.0, "markPrice": 374.6, "marketValue": 112380.0, "marketValueBase": 112380.0, "costBasis": 120496.4281, "costBasisBase": 120496.4281, "unrealizedPnl": -8116.4281, "unrealizedPnlBase": -8116.4281, "fxRateToBase": 1.0, "ibkrPercentOfNav": 8.57, "reportDate": "2026-10-16", "weightPct": 10.038371472726393, "pnlPct": -6.73582464474729, "sector": "金融", "region": "香港", "assetClass": "股票"}, {"symbol": "PM", "description": "PHILIP MORRIS INTERNATIONAL", "currency": "USD", "assetCategory": "STK", "listingExchange": "NYSE", "side": "Long", "quantity": 63.0, "markPrice": 205.2, "marketValue": 12927.6, "marketValueBase": 101455.8048, "costBasis": 9618.332587, "costBasisBase": 75484.674142776, "unrealizedPnl": 3309.267413, "unrealizedPnlBase": 25971.130657224, "fxRateToBase": 7.848, "ibkrPercentOfNav": 7.73, "reportDate": "2026-10-16", "weightPct": 9.062565017323521, "pnlPct": 34.40583264372411, "sector": "消費必需", "region": "美國", "assetClass": "股票"}, {"symbol": "VT", "description": "VANGUARD TOT WORLD STK ETF", "currency": "USD", "assetCategory": "STK", "listingExchange": "ARCA", "side": "Long", "quantity": 70.0, "markPrice": 156.82, "marketValue": 10977.4, "marketValueBase": 86150.63519999999, "costBasis": 9796.030122, "costBasisBase": 76879.244397456, "unrealizedPnl": 1181.369878, "unrealizedPnlBase": 9271.390802544, "fxRateToBase": 7.848, "ibkrPercentOfNav": 6.57, "reportDate": "2026-10-16", "weightPct": 7.695426933163714, "pnlPct": 12.059679924287598, "sector": "全球多元", "region": "全球", "assetClass": "ETF"}, {"symbol": "GOOGL", "description": "ALPHABET INC-CL A", "currency": "USD", "assetCategory": "STK", "listingExchange": "NASDAQ", "side": "Long", "quantity": 26.0, "markPrice": 340.59, "marketValue": 8855.34, "marketValueBase": 69496.70832, "costBasis": 9242.391257, "costBasisBase": 72534.286584936, "unrealizedPnl": -387.051257, "unrealizedPnlBase": -3037.5782649360003, "fxRateToBase": 7.848, "ibkrPercentOfNav": 5.3, "reportDate": "2026-10-16", "weightPct": 6.207810769246085, "pnlPct": -4.1877826445277915, "sector": "通訊服務", "region": "美國", "assetClass": "股票"}, {"symbol": "MCD", "description": "MC DONALD'S-CORP", "currency": "USD", "assetCategory": "STK", "listingExchange": "NYSE", "side": "Long", "quantity": 28.0, "markPrice": 242.97, "marketValue": 6803.16, "marketValueBase": 53391.19968, "costBasis": 8007.929921, "costBasisBase": 62846.234020008, "unrealizedPnl": -1204.769921, "unrealizedPnlBase": -9455.034340008, "fxRateToBase": 7.848, "ibkrPercentOfNav": 4.07, "reportDate": "2026-10-16", "weightPct": 4.769182201124314, "pnlPct": -15.044711091197374, "sector": "消費週期", "region": "美國", "assetClass": "股票"}, {"symbol": "META", "description": "META PLATFORMS INC-CLASS A", "currency": "USD", "assetCategory": "STK", "listingExchange": "NASDAQ", "side": "Long", "quantity": 9.0, "markPrice": 709.325, "marketValue": 6383.93, "marketValueBase": 50101.08264, "costBasis": 5296.64209, "costBasisBase": 41568.04712232, "unrealizedPnl": 1087.28791, "unrealizedPnlBase": 8533.03551768, "fxRateToBase": 7.848, "ibkrPercentOfNav": 3.82, "reportDate": "2026-10-16", "weightPct": 4.475291677576824, "pnlPct": 20.52787202769066, "sector": "通訊服務", "region": "美國", "assetClass": "股票"}, {"symbol": "UBER", "description": "UBER TECHNOLOGIES INC", "currency": "USD", "assetCategory": "STK", "listingExchange": "NYSE", "side": "Long", "quantity": 90.0, "markPrice": 70.35, "marketValue": 6331.5, "marketValueBase": 49689.612, "costBasis": 6381.367041, "costBasisBase": 50080.968537768, "unrealizedPnl": -49.867041, "unrealizedPnlBase": -391.356537768, "fxRateToBase": 7.848, "ibkrPercentOfNav": 3.79, "reportDate": "2026-10-16", "weightPct": 4.43853696023886, "pnlPct": -0.7814476221099096, "sector": "工業", "region": "美國", "assetClass": "股票"}, {"symbol": "6823", "description": "HKT TRUST AND HKT LTD-SS", "currency": "HKD", "assetCategory": "STK", "listingExchange": "SEHK", "side": "Long", "quantity": 4000.0, "markPrice": 12.07, "marketValue": 48280.0, "marketValueBase": 48280.0, "costBasis": 39423.120335, "costBasisBase": 39423.120335, "unrealizedPnl": 8856.879665, "unrealizedPnlBase": 8856.879665, "fxRateToBase": 1.0, "ibkrPercentOfNav": 3.68, "reportDate": "2026-10-16", "weightPct": 4.31262301746957, "pnlPct": 22.466206606017504, "sector": "電訊", "region": "香港", "assetClass": "股票"}, {"symbol": "IBB", "description": "ISHARES BIOTECHNOLOGY ETF", "currency": "USD", "assetCategory": "STK", "listingExchange": "NASDAQ", "side": "Long", "quantity": 30.0, "markPrice": 201.99, "marketValue": 6059.7, "marketValueBase": 47556.5256, "costBasis": 6158.343861, "costBasisBase": 48330.682621128, "unrealizedPnl": -98.643861, "unrealizedPnlBase": -774.157021128, "fxRateToBase": 7.848, "ibkrPercentOfNav": 3.63, "reportDate": "2026-10-16", "weightPct": 4.247998486608137, "pnlPct": -1.601792027637477, "sector": "醫療生技", "region": "美國", "assetClass": "ETF"}, {"symbol": "SPCX", "description": "SPACE EXPLORATION TECHN-CL A", "currency": "USD", "assetCategory": "STK", "listingExchange": "NASDAQ", "side": "Long", "quantity": 36.0, "markPrice": 146.03, "marketValue": 5257.08, "marketValueBase": 41257.563839999995, "costBasis": 5203.887022, "costBasisBase": 40840.105348656, "unrealizedPnl": 53.192978, "unrealizedPnlBase": 417.458491344, "fxRateToBase": 7.848, "ibkrPercentOfNav": 3.15, "reportDate": "2026-10-16", "weightPct": 3.6853421595092, "pnlPct": 1.0221778023835046, "sector": "航太", "region": "美國", "assetClass": "股票"}, {"symbol": "270", "description": "GUANGDONG INVESTMENT LTD", "currency": "HKD", "assetCategory": "STK", "listingExchange": "SEHK", "side": "Long", "quantity": 4000.0, "markPrice": 8.95, "marketValue": 35800.0, "marketValueBase": 35800.0, "costBasis": 24438.038156, "costBasisBase": 24438.038156, "unrealizedPnl": 11361.961844, "unrealizedPnlBase": 11361.961844, "fxRateToBase": 1.0, "ibkrPercentOfNav": 2.73, "reportDate": "2026-10-16", "weightPct": 3.1978439110482726, "pnlPct": 46.49293765510561, "sector": "公用事業", "region": "香港", "assetClass": "股票"}, {"symbol": "RMS", "description": "HERMES INTL", "currency": "EUR", "assetCategory": "STK", "listingExchange": "SBF", "side": "Long", "quantity": 3.0, "markPrice": 1337.5, "marketValue": 4012.5, "marketValueBase": 35391.854999999996, "costBasis": 4782.28, "costBasisBase": 42181.622511999994, "unrealizedPnl": -769.78, "unrealizedPnlBase": -6789.767511999999, "fxRateToBase": 8.8204, "ibkrPercentOfNav": 2.7, "reportDate": "2026-10-16", "weightPct": 3.161386257331099, "pnlPct": -16.096506268976306, "sector": "奢侈品", "region": "歐洲", "assetClass": "股票"}, {"symbol": "MA", "description": "MASTERCARD INC - A", "currency": "USD", "assetCategory": "STK", "listingExchange": "NYSE", "side": "Long", "quantity": 7.0, "markPrice": 617.42, "marketValue": 4321.94, "marketValueBase": 33918.585119999996, "costBasis": 3455.671971, "costBasisBase": 27120.113628408002, "unrealizedPnl": 866.268029, "unrealizedPnlBase": 6798.471491591999, "fxRateToBase": 7.848, "ibkrPercentOfNav": 2.59, "reportDate": "2026-10-16", "weightPct": 3.0297860585856013, "pnlPct": 25.068005188852453, "sector": "金融", "region": "美國", "assetClass": "股票"}, {"symbol": "TSM", "description": "TAIWAN SEMICONDUCTOR-SP ADR", "currency": "USD", "assetCategory": "STK", "listingExchange": "NYSE", "side": "Long", "quantity": 10.0, "markPrice": 412.61, "marketValue": 4126.1, "marketValueBase": 32381.632800000003, "costBasis": 4162.925386, "costBasisBase": 32670.638429328, "unrealizedPnl": -36.825386, "unrealizedPnlBase": -289.005629328, "fxRateToBase": 7.848, "ibkrPercentOfNav": 2.47, "reportDate": "2026-10-16", "weightPct": 2.892497410035783, "pnlPct": -0.8846035560436538, "sector": "半導體", "region": "台灣", "assetClass": "股票"}, {"symbol": "T 5 1/8 08/15/56", "description": "T 5 1/8 08/15/56", "currency": "USD", "assetCategory": "BOND", "listingExchange": "", "side": "Long", "quantity": 3000.0, "markPrice": 95.59375, "marketValue": 2867.81, "marketValueBase": 22506.57288, "costBasis": 2905.4, "costBasisBase": 22801.5792, "unrealizedPnl": -37.59, "unrealizedPnlBase": -295.00632, "fxRateToBase": 7.848, "ibkrPercentOfNav": 60.22, "reportDate": "2026-10-16", "weightPct": 2.010405224661234, "pnlPct": -1.2937977559028018, "sector": "政府債", "region": "美國", "assetClass": "債券"}, {"symbol": "215", "description": "HUTCHISON TELECOMM HONG KONG", "currency": "HKD", "assetCategory": "STK", "listingExchange": "SEHK", "side": "Long", "quantity": 20000.0, "markPrice": 1.11, "marketValue": 22200.0, "marketValueBase": 22200.0, "costBasis": 19556.55575, "costBasisBase": 19556.55575, "unrealizedPnl": 2643.44425, "unrealizedPnlBase": 2643.44425, "fxRateToBase": 1.0, "ibkrPercentOfNav": 1.69, "reportDate": "2026-10-16", "weightPct": 1.9830205258455766, "pnlPct": 13.516921301441334, "sector": "電訊", "region": "香港", "assetClass": "股票"}, {"symbol": "000660.KS", "description": "SK HYNIX INC", "currency": "KRW", "assetCategory": "STK", "listingExchange": "KRX", "side": "Long", "quantity": 2.0, "markPrice": 1272000.0, "marketValue": 2544000.0, "marketValueBase": 14959.7376, "costBasis": 3232000.0, "costBasisBase": 19005.4528, "unrealizedPnl": -688000.0, "unrealizedPnlBase": -4045.7152, "fxRateToBase": 0.0058804, "ibkrPercentOfNav": 1.14, "reportDate": "2026-10-16", "weightPct": 1.3362822847776508, "pnlPct": -21.287128712871286, "sector": "半導體", "region": "韓國", "assetClass": "股票"}, {"symbol": "T 4 3/8 05/15/36", "description": "T 4 3/8 05/15/36", "currency": "USD", "assetCategory": "BOND", "listingExchange": "", "side": "Long", "quantity": 2000.0, "markPrice": 94.71875, "marketValue": 1894.38, "marketValueBase": 14867.09424, "costBasis": 1915.0, "costBasisBase": 15028.92, "unrealizedPnl": -20.62, "unrealizedPnlBase": -161.82576, "fxRateToBase": 7.848, "ibkrPercentOfNav": 39.78, "reportDate": "2026-10-16", "weightPct": 1.3280068935856102, "pnlPct": -1.076762402088773, "sector": "政府債", "region": "美國", "assetClass": "債券"}, {"symbol": "MP", "description": "MP MATERIALS CORP", "currency": "USD", "assetCategory": "STK", "listingExchange": "NYSE", "side": "Long", "quantity": 40.0, "markPrice": 40.17, "marketValue": 1606.8, "marketValueBase": 12610.1664, "costBasis": 1934.510377, "costBasisBase": 15182.037438696001, "unrealizedPnl": -327.710377, "unrealizedPnlBase": -2571.8710386959997, "fxRateToBase": 7.848, "ibkrPercentOfNav": 0.96, "reportDate": "2026-10-16", "weightPct": 1.1264062525012715, "pnlPct": -16.940223267667694, "sector": "材料", "region": "美國", "assetClass": "股票"}, {"symbol": "MGM", "description": "MGM RESORTS INTERNATIONAL", "currency": "USD", "assetCategory": "STK", "listingExchange": "NYSE", "side": "Long", "quantity": 50.0, "markPrice": 28.6, "marketValue": 1430.0, "marketValueBase": 11222.64, "costBasis": 1941.667976, "costBasisBase": 15238.210275648, "unrealizedPnl": -511.667976, "unrealizedPnlBase": -4015.570275648, "fxRateToBase": 7.848, "ibkrPercentOfNav": 0.86, "reportDate": "2026-10-16", "weightPct": 1.0024651114493515, "pnlPct": -26.351980993891615, "sector": "消費週期", "region": "美國", "assetClass": "股票"}], "topGainers": [{"symbol": "1629.T", "unrealizedPnlBase": 52649.319996973274, "pnlPct": 61.765868267226686}, {"symbol": "VOO", "unrealizedPnlBase": 27117.638738063997, "pnlPct": 18.88735158410439}, {"symbol": "QQQ", "unrealizedPnlBase": 26730.679348367998, "pnlPct": 22.63344022374742}, {"symbol": "PM", "unrealizedPnlBase": 25971.130657224, "pnlPct": 34.40583264372411}, {"symbol": "270", "unrealizedPnlBase": 11361.961844, "pnlPct": 46.49293765510561}], "topLosers": [{"symbol": "MCD", "unrealizedPnlBase": -9455.034340008, "pnlPct": -15.044711091197374}, {"symbol": "388", "unrealizedPnlBase": -8116.4281, "pnlPct": -6.73582464474729}, {"symbol": "RMS", "unrealizedPnlBase": -6789.767511999999, "pnlPct": -16.096506268976306}, {"symbol": "000660.KS", "unrealizedPnlBase": -4045.7152, "pnlPct": -21.287128712871286}, {"symbol": "MGM", "unrealizedPnlBase": -4015.570275648, "pnlPct": -26.351980993891615}], "totals": {"marketValueBase": 1349033.4522, "unrealizedPnlBase": 140408.09480327726}, "allocations": {"sector": [{"label": "美股大盤", "marketValueBase": 170693.29368, "pct": 12.65300674357881}, {"label": "金融", "marketValueBase": 146298.58512, "pct": 10.844696614558867}, {"label": "科技", "marketValueBase": 144833.27039999998, "pct": 10.736077016015154}, {"label": "商業批發", "marketValueBase": 137889.472, "pct": 10.221353056525786}, {"label": "通訊服務", "marketValueBase": 119597.79096000001, "pct": 8.865442941015308}, {"label": "消費必需", "marketValueBase": 101455.8048, "pct": 7.5206292797666485}, {"label": "全球多元", "marketValueBase": 86150.63519999999, "pct": 6.386100734530029}, {"label": "電訊", "marketValueBase": 70480.0, "pct": 5.224481267314863}, {"label": "其他", "marketValueBase": 371634.60004, "pct": 27.54821234669454}], "region": [{"label": "美國", "marketValueBase": 823600.1195999999, "pct": 61.051126512606125}, {"label": "香港", "marketValueBase": 218660.0, "pct": 16.208641797830133}, {"label": "日本", "marketValueBase": 137889.472, "pct": 10.221353056525786}, {"label": "全球", "marketValueBase": 86150.63519999999, "pct": 6.386100734530029}, {"label": "歐洲", "marketValueBase": 35391.854999999996, "pct": 2.623497211450395}, {"label": "台灣", "marketValueBase": 32381.632800000003, "pct": 2.4003580302024483}, {"label": "韓國", "marketValueBase": 14959.7376, "pct": 1.1089226568550765}], "assetClass": [{"label": "股票", "marketValueBase": 724536.5882, "pct": 53.7078296330182}, {"label": "ETF", "marketValueBase": 587123.1968800001, "pct": 43.52176707868298}, {"label": "債券", "marketValueBase": 37373.66712, "pct": 2.770403288298828}]}}</script>
+<script>
+(function () {
+  const D = JSON.parse(document.getElementById("portfolio-data").textContent);
+  const base = D.equity.currency || D.meta.baseCurrency || "HKD";
+  const nf0 = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
+  const nf2 = new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const nfFull = new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const COLORS = ["#5b9fd4","#3ecf8e","#e6c07b","#c678dd","#56b6c2","#f2555a","#61afef","#98c379","#d19a66","#7d8796"];
+
+  function money(n, mode) {
+    if (n == null || Number.isNaN(+n)) return "—";
+    if (mode === "full") return nfFull.format(n);
+    if (mode === "qty") return Number.isInteger(+n) ? nf0.format(n) : nf2.format(n);
+    const a = Math.abs(n);
+    if (a >= 1e4) return nf0.format(Math.round(n));
+    return nf2.format(n);
+  }
+  function signed(n, mode) {
+    if (n == null || Number.isNaN(+n)) return "—";
+    const t = (n > 0 ? "+" : "") + money(n, mode || "full");
+    return `<span class="${n > 0 ? "pos" : n < 0 ? "neg" : ""}">${t}</span>`;
+  }
+  function signedPct(n) {
+    if (n == null || Number.isNaN(+n)) return "—";
+    const t = (n > 0 ? "+" : "") + nf2.format(n) + "%";
+    return `<span class="${n > 0 ? "pos" : n < 0 ? "neg" : ""}">${t}</span>`;
+  }
+  function esc(s) {
+    return String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[c]));
+  }
+
+  function polar(cx, cy, r, angleDeg) {
+    const a = (angleDeg - 90) * Math.PI / 180;
+    return [cx + r * Math.cos(a), cy + r * Math.sin(a)];
+  }
+  function donutSVG(items) {
+    const cx = 54, cy = 54, r = 46, ir = 28;
+    let angle = 0;
+    const total = items.reduce((s, x) => s + x.pct, 0) || 1;
+    const parts = [];
+    items.forEach((it, i) => {
+      const sweep = it.pct / total * 360;
+      if (sweep <= 0) return;
+      const large = sweep > 180 ? 1 : 0;
+      const [x1, y1] = polar(cx, cy, r, angle);
+      const [x2, y2] = polar(cx, cy, r, angle + sweep);
+      const [x3, y3] = polar(cx, cy, ir, angle + sweep);
+      const [x4, y4] = polar(cx, cy, ir, angle);
+      const color = COLORS[i % COLORS.length];
+      // Full circle special-case
+      if (sweep >= 359.9) {
+        parts.push(`<circle cx="${cx}" cy="${cy}" r="${r}" fill="${color}" />`);
+        parts.push(`<circle cx="${cx}" cy="${cy}" r="${ir}" fill="var(--bg)" />`);
+      } else {
+        parts.push(`<path d="M ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2} L ${x3} ${y3} A ${ir} ${ir} 0 ${large} 0 ${x4} ${y4} Z" fill="${color}" />`);
+      }
+      angle += sweep;
+    });
+    return `<svg viewBox="0 0 108 108" aria-hidden="true">${parts.join("")}</svg>`;
+  }
+  function pieCard(title, items) {
+    if (!items || !items.length) return "";
+    const legend = items.map((it, i) => `
+      <div class="leg">
+        <i style="background:${COLORS[i % COLORS.length]}"></i>
+        <span class="n">${esc(it.label)}</span>
+        <span class="p">${it.pct.toFixed(1)}%</span>
+      </div>`).join("");
+    return `<div>
+      <div class="sh" style="margin-bottom:10px">${esc(title)}</div>
+      <div class="pie-card">${donutSVG(items)}<div class="legend">${legend}</div></div>
+    </div>`;
+  }
+
+  document.getElementById("who").textContent = D.meta.accountName || "";
+  document.getElementById("when").textContent = "結單 " + (D.meta.statementTo || "—");
+
+  const eq = D.equity;
+  document.getElementById("nav").innerHTML = money(eq.total, "full") + `<span class="ccy">${esc(base)}</span>`;
+  const twr = (D.changeInNav || {}).twr;
+  const mtm = (D.changeInNav || {}).mtm;
+  document.getElementById("day").innerHTML =
+    signedPct(twr) + ` <span style="color:var(--muted);font-size:.82rem">${signed(mtm, "full")} 日內</span>`;
+
+  document.getElementById("upnl").innerHTML = signed(D.totals.unrealizedPnlBase, "full");
+  const cash = eq.cash;
+  document.getElementById("cash").innerHTML = `<span class="${cash < 0 ? "neg" : cash > 0 ? "pos" : ""}">${money(cash, "full")}</span>`;
+  document.getElementById("cashHint").textContent = cash < 0 ? "保證金欠款（淨額）" : "淨現金";
+
+  const A = D.allocations || {};
+  document.getElementById("pies").innerHTML =
+    pieCard("資產種類", A.assetClass) +
+    pieCard("地區", A.region) +
+    pieCard("行業", A.sector);
+
+  const TOP_N = 6;
+  const ranked = D.positions.slice().sort((a, b) => b.weightPct - a.weightPct);
+  const top = ranked.slice(0, TOP_N);
+  const rest = ranked.slice(TOP_N);
+  const otherPct = rest.reduce((s, p) => s + p.weightPct, 0);
+  const rows = top.map(p => ({ sym: p.symbol, pct: p.weightPct, other: false }));
+  if (otherPct > 0.05) rows.push({ sym: "其他", pct: otherPct, other: true });
+  const maxP = Math.max(...rows.map(r => r.pct), 1);
+  document.getElementById("weights").innerHTML = rows.map(r => `
+    <div class="br">
+      <div class="sym">${esc(r.sym)}</div>
+      <div class="track"><div class="fill${r.other ? " other" : ""}" style="width:${(r.pct / maxP * 100).toFixed(1)}%"></div></div>
+      <div class="pct">${r.pct.toFixed(1)}%</div>
+    </div>`).join("");
+
+  function movers(list, n) {
+    return list.slice(0, n).map(p => `
+      <div class="mv"><span class="s">${esc(p.symbol)}</span>${signed(p.unrealizedPnlBase, "full")}</div>`).join("");
+  }
+  document.getElementById("gainers").innerHTML = movers(D.topGainers, 3);
+  document.getElementById("losers").innerHTML = movers(D.topLosers, 3);
+
+  document.getElementById("posSummary").textContent = `全部持倉 · ${D.meta.positionCount}`;
+  document.getElementById("tbody").innerHTML = D.positions.map(p => `
+    <tr>
+      <td><div class="sym">${esc(p.symbol)}</div><span class="desc">${esc(p.description)}</span></td>
+      <td>${money(p.quantity, "qty")}</td>
+      <td>${money(p.marketValue, "full")}<div class="desc">${esc(p.currency)}</div></td>
+      <td class="${p.unrealizedPnl > 0 ? "pos" : p.unrealizedPnl < 0 ? "neg" : ""}">${(p.unrealizedPnl > 0 ? "+" : "") + money(p.unrealizedPnl, "full")}</td>
+      <td>${p.weightPct.toFixed(1)}</td>
+    </tr>`).join("");
+
+  document.getElementById("foot").textContent =
+    `Flex 日結 · 只讀 · 產生 ${D.meta.whenGenerated}`;
+})();
+</script>
+</body>
+</html>
