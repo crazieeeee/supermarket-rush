@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0a0908">
+<title>FLASHBACK — 復古相機</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Staatliches&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0a0908;
+    --ink-soft: #161311;
+    --paper: #f3ebe0;
+    --amber: #e4a13a;
+    --amber-deep: #b8741a;
+    --steel: #8a9aa8;
+    --danger: #e25b4a;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --chrome-h: 56px;
+    --dock-h: 168px;
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    margin: 0;
+    background: var(--ink);
+    color: var(--paper);
+    font-family: "Figtree", sans-serif;
+    overflow: hidden;
+  }
+
+  button {
+    font: inherit;
+    color: inherit;
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+  }
+
+  button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .app {
+    position: relative;
+    height: 100%;
+    height: 100dvh;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    background:
+      radial-gradient(120% 80% at 50% 0%, #2a2118 0%, transparent 55%),
+      radial-gradient(90% 60% at 80% 100%, #1a2430 0%, transparent 50%),
+      var(--ink);
+  }
+
+  .topbar {
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: calc(10px + var(--safe-top)) 16px 10px;
+    min-height: calc(var(--chrome-h) + var(--safe-top));
+  }
+
+  .brand {
+    font-family: "Staatliches", sans-serif;
+    font-size: clamp(1.75rem, 6vw, 2.25rem);
+    letter-spacing: 0.08em;
+    line-height: 1;
+    color: var(--paper);
+    text-shadow: 0 1px 0 rgba(0,0,0,0.45);
+  }
+
+  .brand span {
+    color: var(--amber);
+  }
+
+  .top-actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  .chip {
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(243, 235, 224, 0.22);
+    background: rgba(10, 9, 8, 0.45);
+    backdrop-filter: blur(10px);
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+
+  .chip[aria-pressed="true"] {
+    border-color: var(--amber);
+    color: var(--amber);
+  }
+
+  .stage {
+    position: relative;
+    margin: 0 12px;
+    border-radius: 28px;
+    overflow: hidden;
+    background: #000;
+    isolation: isolate;
+    box-shadow:
+      0 0 0 1px rgba(243, 235, 224, 0.08),
+      0 24px 60px rgba(0, 0, 0, 0.45);
+    transform-origin: center;
+    animation: stage-in 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  @keyframes stage-in {
+    from { opacity: 0; transform: translateY(18px) scale(0.985); }
+    to { opacity: 1; transform: none; }
+  }
+
+  .viewfinder {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scaleX(1);
+  }
+
+  .viewfinder.mirrored {
+    transform: scaleX(-1);
+  }
+
+  .fx-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    mix-blend-mode: soft-light;
+    opacity: 0.55;
+  }
+
+  .vignette {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(circle at center, transparent 42%, rgba(0,0,0,0.55) 100%);
+    opacity: 0.65;
+    transition: opacity 280ms ease;
+  }
+
+  .grain {
+    position: absolute;
+    inset: -20%;
+    pointer-events: none;
+    opacity: 0.18;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+    animation: grain-drift 1.2s steps(2) infinite;
+  }
+
+  @keyframes grain-drift {
+    0% { transform: translate(0, 0); }
+    25% { transform: translate(-1.5%, 1%); }
+    50% { transform: translate(1%, -1.5%); }
+    75% { transform: translate(-0.5%, -1%); }
+    100% { transform: translate(0, 0); }
+  }
+
+  .frame-marks {
+    position: absolute;
+    inset: 14px;
+    pointer-events: none;
+    border: 1px solid rgba(243, 235, 224, 0.18);
+    border-radius: 18px;
+  }
+
+  .frame-marks::before,
+  .frame-marks::after {
+    content: "";
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(228, 161, 58, 0.85);
+  }
+
+  .frame-marks::before {
+    top: 10px;
+    left: 10px;
+    border-right: 0;
+    border-bottom: 0;
+  }
+
+  .frame-marks::after {
+    right: 10px;
+    bottom: 10px;
+    border-left: 0;
+    border-top: 0;
+  }
+
+  .hud {
+    position: absolute;
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 12px;
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  .filter-name {
+    font-family: "Staatliches", sans-serif;
+    font-size: 1.35rem;
+    letter-spacing: 0.06em;
+    color: var(--paper);
+    text-shadow: 0 2px 12px rgba(0,0,0,0.65);
+    animation: name-pop 320ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  @keyframes name-pop {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: none; }
+  }
+
+  .filter-meta {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(243, 235, 224, 0.72);
+  }
+
+  .gate,
+  .flash {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    pointer-events: none;
+  }
+
+  .gate {
+    display: grid;
+    place-items: center;
+    background:
+      linear-gradient(180deg, rgba(10,9,8,0.92), rgba(10,9,8,0.78));
+    pointer-events: auto;
+    padding: 24px;
+    text-align: center;
+  }
+
+  .gate[hidden] { display: none; }
+
+  .gate h1 {
+    margin: 0 0 8px;
+    font-family: "Staatliches", sans-serif;
+    font-size: clamp(2.4rem, 10vw, 3.4rem);
+    letter-spacing: 0.08em;
+  }
+
+  .gate h1 span { color: var(--amber); }
+
+  .gate p {
+    margin: 0 auto 22px;
+    max-width: 18rem;
+    color: rgba(243, 235, 224, 0.78);
+    line-height: 1.45;
+  }
+
+  .primary {
+    min-height: 48px;
+    padding: 0 22px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, #f0b65a, var(--amber-deep));
+    color: #1a1208;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    box-shadow: 0 10px 30px rgba(184, 116, 26, 0.35);
+  }
+
+  .flash {
+    background: #fff;
+    opacity: 0;
+  }
+
+  .flash.burst {
+    animation: flash-burst 220ms ease-out;
+  }
+
+  @keyframes flash-burst {
+    0% { opacity: 0.85; }
+    100% { opacity: 0; }
+  }
+
+  .dock {
+    z-index: 5;
+    padding: 14px 0 calc(14px + var(--safe-bottom));
+    display: grid;
+    gap: 14px;
+  }
+
+  .filters {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    padding: 0 16px 4px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .filters::-webkit-scrollbar { display: none; }
+
+  .filter-card {
+    flex: 0 0 auto;
+    width: 72px;
+    scroll-snap-align: center;
+    display: grid;
+    gap: 6px;
+    justify-items: center;
+  }
+
+  .swatch {
+    width: 64px;
+    height: 64px;
+    border-radius: 18px;
+    border: 2px solid transparent;
+    background-size: cover;
+    background-position: center;
+    position: relative;
+    overflow: hidden;
+    transition: transform 220ms ease, border-color 220ms ease;
+  }
+
+  .filter-card[aria-selected="true"] .swatch {
+    border-color: var(--amber);
+    transform: translateY(-3px) scale(1.04);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+  }
+
+  .swatch::after {
+    content: attr(data-label);
+    position: absolute;
+    inset: auto 0 0;
+    padding: 4px 0 5px;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-align: center;
+    background: linear-gradient(transparent, rgba(0,0,0,0.72));
+  }
+
+  .filter-card small {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: rgba(243, 235, 224, 0.7);
+  }
+
+  .controls {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    padding: 0 22px;
+    gap: 12px;
+  }
+
+  .thumb {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    border: 1px solid rgba(243, 235, 224, 0.25);
+    background: #1a1612 center/cover no-repeat;
+    justify-self: start;
+    overflow: hidden;
+    opacity: 0;
+    transform: scale(0.9);
+    transition: opacity 240ms ease, transform 240ms ease;
+  }
+
+  .thumb.has-photo {
+    opacity: 1;
+    transform: none;
+  }
+
+  .shutter {
+    width: 78px;
+    height: 78px;
+    border-radius: 50%;
+    border: 3px solid rgba(243, 235, 224, 0.9);
+    display: grid;
+    place-items: center;
+    justify-self: center;
+    transition: transform 120ms ease;
+  }
+
+  .shutter:active { transform: scale(0.94); }
+
+  .shutter-inner {
+    width: 62px;
+    height: 62px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #fff6e8, var(--amber) 55%, var(--amber-deep));
+    box-shadow: inset 0 -4px 10px rgba(0,0,0,0.25);
+  }
+
+  .flip {
+    justify-self: end;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 1px solid rgba(243, 235, 224, 0.22);
+    background: rgba(10, 9, 8, 0.4);
+    display: grid;
+    place-items: center;
+    font-size: 1.15rem;
+  }
+
+  .status {
+    position: absolute;
+    left: 50%;
+    top: calc(12px + var(--safe-top) + var(--chrome-h));
+    transform: translateX(-50%);
+    z-index: 6;
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: rgba(226, 91, 74, 0.92);
+    color: #fff;
+    font-size: 0.82rem;
+    font-weight: 600;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 200ms ease;
+  }
+
+  .status.show { opacity: 1; }
+
+  @media (min-width: 720px) {
+    .app {
+      max-width: 430px;
+      margin: 0 auto;
+      border-left: 1px solid rgba(243,235,224,0.06);
+      border-right: 1px solid rgba(243,235,224,0.06);
+    }
+  }
+</style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">FLASH<span>BACK</span></div>
+      <div class="top-actions">
+        <button class="chip" id="btn-torch" type="button" aria-pressed="false" hidden>Flash</button>
+        <button class="chip" id="btn-grid" type="button" aria-pressed="false">Grid</button>
+      </div>
+    </header>
+
+    <main class="stage" id="stage">
+      <video class="viewfinder" id="video" playsinline muted autoplay></video>
+      <canvas class="viewfinder" id="demo" hidden aria-hidden="true"></canvas>
+      <canvas class="fx-canvas" id="fx" aria-hidden="true"></canvas>
+      <div class="vignette" id="vignette"></div>
+      <div class="grain" id="grain"></div>
+      <div class="frame-marks" id="grid" hidden></div>
+      <div class="hud">
+        <div>
+          <div class="filter-name" id="filter-label">RAW</div>
+          <div class="filter-meta" id="filter-meta">Clean glass</div>
+        </div>
+      </div>
+      <div class="flash" id="flash"></div>
+      <div class="gate" id="gate">
+        <div>
+          <h1>FLASH<span>BACK</span></h1>
+          <p>點一下開啟鏡頭，再用下方復古濾鏡調出底片感。沒有相機時也可進入示範預覽。</p>
+          <button class="primary" id="btn-start" type="button">開啟相機</button>
+          <div style="margin-top:12px">
+            <button class="chip" id="btn-demo" type="button">示範預覽</button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer class="dock">
+      <div class="filters" id="filters" role="listbox" aria-label="復古濾鏡"></div>
+      <div class="controls">
+        <a class="thumb" id="thumb" href="#" download="flashback.jpg" aria-label="最近拍下的照片"></a>
+        <button class="shutter" id="btn-shutter" type="button" aria-label="快門" disabled>
+          <span class="shutter-inner"></span>
+        </button>
+        <button class="flip" id="btn-flip" type="button" aria-label="前後鏡頭" disabled>↺</button>
+      </div>
+    </footer>
+
+    <div class="status" id="status" role="status"></div>
+  </div>
+
+  <canvas id="capture" hidden></canvas>
+
+<script>
+(() => {
+  const FILTERS = [
+    {
+      id: "raw",
+      name: "RAW",
+      meta: "Clean glass",
+      css: "none",
+      vignette: 0.25,
+      grain: 0.05,
+      swatch: "linear-gradient(135deg,#d9d2c8,#8f8a83)",
+    },
+    {
+      id: "sepia",
+      name: "SEPIA",
+      meta: "Warm archive",
+      css: "sepia(0.85) contrast(1.05) brightness(1.02)",
+      vignette: 0.7,
+      grain: 0.22,
+      swatch: "linear-gradient(135deg,#e8c48a,#8b5a2b)",
+    },
+    {
+      id: "noir",
+      name: "NOIR",
+      meta: "Ink & silver",
+      css: "grayscale(1) contrast(1.25) brightness(0.95)",
+      vignette: 0.85,
+      grain: 0.28,
+      swatch: "linear-gradient(135deg,#f0f0f0,#1a1a1a)",
+    },
+    {
+      id: "fade",
+      name: "FADE",
+      meta: "Washed seventies",
+      css: "contrast(0.86) saturate(0.72) brightness(1.12)",
+      vignette: 0.45,
+      grain: 0.2,
+      swatch: "linear-gradient(135deg,#f3d9c4,#9db6a8)",
+    },
+    {
+      id: "chrome",
+      name: "CHROME",
+      meta: "Cool film stock",
+      css: "contrast(1.15) saturate(1.2) hue-rotate(-8deg) brightness(1.05)",
+      vignette: 0.55,
+      grain: 0.14,
+      swatch: "linear-gradient(135deg,#9ad7e0,#4f6d8c)",
+    },
+    {
+      id: "instant",
+      name: "INSTANT",
+      meta: "Peel & wait",
+      css: "sepia(0.35) saturate(1.25) contrast(1.1) brightness(1.08)",
+      vignette: 0.5,
+      grain: 0.16,
+      swatch: "linear-gradient(135deg,#ffd7a8,#e28b6d)",
+    },
+    {
+      id: "vhs",
+      name: "VHS",
+      meta: "Tracking soft",
+      css: "contrast(1.2) saturate(1.35) hue-rotate(12deg) brightness(0.98)",
+      vignette: 0.75,
+      grain: 0.32,
+      swatch: "linear-gradient(135deg,#7dffb3,#c45cff 55%,#1d1d1d)",
+    },
+    {
+      id: "redscale",
+      name: "REDSCALE",
+      meta: "Flipped film",
+      css: "sepia(0.4) hue-rotate(-28deg) saturate(1.45) contrast(1.12)",
+      vignette: 0.7,
+      grain: 0.24,
+      swatch: "linear-gradient(135deg,#ffb08a,#7a1f1f)",
+    },
+    {
+      id: "cyanotype",
+      name: "BLUEPRINT",
+      meta: "Iron blue print",
+      css: "grayscale(0.35) sepia(0.4) hue-rotate(180deg) saturate(1.4) contrast(1.1)",
+      vignette: 0.6,
+      grain: 0.18,
+      swatch: "linear-gradient(135deg,#b9e7ff,#1f4e79)",
+    },
+    {
+      id: "golden",
+      name: "GOLDEN",
+      meta: "Late light",
+      css: "sepia(0.25) saturate(1.3) contrast(1.08) brightness(1.06) hue-rotate(-6deg)",
+      vignette: 0.58,
+      grain: 0.15,
+      swatch: "linear-gradient(135deg,#ffe0a3,#d97706)",
+    },
+  ];
+
+  const els = {
+    video: document.getElementById("video"),
+    demo: document.getElementById("demo"),
+    fx: document.getElementById("fx"),
+    vignette: document.getElementById("vignette"),
+    grain: document.getElementById("grain"),
+    grid: document.getElementById("grid"),
+    gate: document.getElementById("gate"),
+    flash: document.getElementById("flash"),
+    filters: document.getElementById("filters"),
+    filterLabel: document.getElementById("filter-label"),
+    filterMeta: document.getElementById("filter-meta"),
+    shutter: document.getElementById("btn-shutter"),
+    flip: document.getElementById("btn-flip"),
+    start: document.getElementById("btn-start"),
+    demoBtn: document.getElementById("btn-demo"),
+    gridBtn: document.getElementById("btn-grid"),
+    torchBtn: document.getElementById("btn-torch"),
+    thumb: document.getElementById("thumb"),
+    capture: document.getElementById("capture"),
+    status: document.getElementById("status"),
+  };
+
+  let stream = null;
+  let facingMode = "environment";
+  let activeFilter = FILTERS[0];
+  let track = null;
+  let torchOn = false;
+  let lastObjectUrl = null;
+  let fxRaf = 0;
+  let demoRaf = 0;
+  let demoMode = false;
+
+  function toast(message) {
+    els.status.textContent = message;
+    els.status.classList.add("show");
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => els.status.classList.remove("show"), 2600);
+  }
+
+  function renderFilters() {
+    els.filters.innerHTML = FILTERS.map((f, i) => `
+      <button class="filter-card" role="option" type="button"
+        data-id="${f.id}" aria-selected="${i === 0}" aria-label="${f.name}">
+        <span class="swatch" style="background:${f.swatch}" data-label="${f.name}"></span>
+        <small>${f.name}</small>
+      </button>
+    `).join("");
+  }
+
+  function sourceEl() {
+    return demoMode ? els.demo : els.video;
+  }
+
+  function applyFilter(filter) {
+    activeFilter = filter;
+    els.video.style.filter = filter.css;
+    els.demo.style.filter = filter.css;
+    els.vignette.style.opacity = String(filter.vignette);
+    els.grain.style.opacity = String(filter.grain);
+    els.filterLabel.textContent = filter.name;
+    els.filterMeta.textContent = filter.meta;
+    els.filterLabel.style.animation = "none";
+    void els.filterLabel.offsetWidth;
+    els.filterLabel.style.animation = "";
+
+    [...els.filters.children].forEach((btn) => {
+      btn.setAttribute("aria-selected", String(btn.dataset.id === filter.id));
+    });
+  }
+
+  function stopDemo() {
+    cancelAnimationFrame(demoRaf);
+    demoMode = false;
+    els.demo.hidden = true;
+    els.video.hidden = false;
+  }
+
+  function paintDemoScene() {
+    const canvas = els.demo;
+    const rect = canvas.getBoundingClientRect();
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const w = Math.max(1, Math.floor(rect.width * dpr));
+    const h = Math.max(1, Math.floor(rect.height * dpr));
+    if (canvas.width !== w || canvas.height !== h) {
+      canvas.width = w;
+      canvas.height = h;
+    }
+    const ctx = canvas.getContext("2d");
+    const t = performance.now() / 1000;
+    const sky = ctx.createLinearGradient(0, 0, 0, h);
+    sky.addColorStop(0, "#6ea0c8");
+    sky.addColorStop(0.45, "#d8b07a");
+    sky.addColorStop(1, "#6b4a2e");
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, w, h);
+
+    ctx.fillStyle = "#2f5d3a";
+    ctx.beginPath();
+    ctx.moveTo(0, h * 0.62);
+    for (let x = 0; x <= w; x += 24) {
+      const y = h * 0.58 + Math.sin(x * 0.01 + t * 0.4) * h * 0.03;
+      ctx.lineTo(x, y);
+    }
+    ctx.lineTo(w, h);
+    ctx.lineTo(0, h);
+    ctx.fill();
+
+    const sunX = w * (0.7 + Math.sin(t * 0.2) * 0.03);
+    const sunY = h * 0.28;
+    const sun = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, h * 0.18);
+    sun.addColorStop(0, "rgba(255, 230, 160, 0.95)");
+    sun.addColorStop(1, "rgba(255, 180, 80, 0)");
+    ctx.fillStyle = sun;
+    ctx.beginPath();
+    ctx.arc(sunX, sunY, h * 0.18, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "rgba(20, 16, 12, 0.55)";
+    ctx.fillRect(w * 0.18, h * 0.48, w * 0.16, h * 0.28);
+    ctx.fillStyle = "rgba(120, 48, 36, 0.8)";
+    ctx.beginPath();
+    ctx.moveTo(w * 0.15, h * 0.48);
+    ctx.lineTo(w * 0.26, h * 0.38);
+    ctx.lineTo(w * 0.37, h * 0.48);
+    ctx.fill();
+
+    demoRaf = requestAnimationFrame(paintDemoScene);
+  }
+
+  function startDemo() {
+    if (stream) {
+      stream.getTracks().forEach((t) => t.stop());
+      stream = null;
+      track = null;
+    }
+    demoMode = true;
+    els.video.hidden = true;
+    els.demo.hidden = false;
+    els.gate.hidden = true;
+    els.shutter.disabled = false;
+    els.flip.disabled = true;
+    els.torchBtn.hidden = true;
+    cancelAnimationFrame(demoRaf);
+    paintDemoScene();
+    resizeFx();
+    cancelAnimationFrame(fxRaf);
+    paintFx();
+    toast("示範預覽已開啟");
+  }
+
+  function paintFx() {
+    const canvas = els.fx;
+    const ctx = canvas.getContext("2d");
+    const w = canvas.width;
+    const h = canvas.height;
+    if (!w || !h) {
+      fxRaf = requestAnimationFrame(paintFx);
+      return;
+    }
+    ctx.clearRect(0, 0, w, h);
+    if (activeFilter.id === "vhs") {
+      for (let y = 0; y < h; y += 3) {
+        ctx.fillStyle = `rgba(0,0,0,${0.08 + (y % 9) * 0.01})`;
+        ctx.fillRect(0, y, w, 1);
+      }
+      ctx.fillStyle = "rgba(120, 255, 180, 0.05)";
+      ctx.fillRect(0, (performance.now() / 18) % h, w, 2);
+    } else if (activeFilter.id === "instant") {
+      const g = ctx.createLinearGradient(0, 0, 0, h);
+      g.addColorStop(0, "rgba(255, 220, 170, 0.12)");
+      g.addColorStop(1, "rgba(180, 90, 60, 0.08)");
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, w, h);
+    }
+    fxRaf = requestAnimationFrame(paintFx);
+  }
+
+  function resizeFx() {
+    const rect = sourceEl().getBoundingClientRect();
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    els.fx.width = Math.max(1, Math.floor(rect.width * dpr));
+    els.fx.height = Math.max(1, Math.floor(rect.height * dpr));
+  }
+
+  async function startCamera() {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      toast("此瀏覽器不支援相機，改用示範預覽");
+      startDemo();
+      return;
+    }
+
+    if (stream) {
+      stream.getTracks().forEach((t) => t.stop());
+      stream = null;
+    }
+    stopDemo();
+
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
+        audio: false,
+        video: {
+          facingMode: { ideal: facingMode },
+          width: { ideal: 1920 },
+          height: { ideal: 1080 },
+        },
+      });
+      els.video.srcObject = stream;
+      await els.video.play();
+      track = stream.getVideoTracks()[0] || null;
+      els.video.classList.toggle("mirrored", facingMode === "user");
+      els.gate.hidden = true;
+      els.shutter.disabled = false;
+      els.flip.disabled = false;
+
+      const caps = track?.getCapabilities?.() || {};
+      if (caps.torch) {
+        els.torchBtn.hidden = false;
+      } else {
+        els.torchBtn.hidden = true;
+        torchOn = false;
+        els.torchBtn.setAttribute("aria-pressed", "false");
+      }
+
+      resizeFx();
+      cancelAnimationFrame(fxRaf);
+      paintFx();
+    } catch (err) {
+      console.error(err);
+      toast("無法開啟相機，改用示範預覽");
+      startDemo();
+    }
+  }
+
+  async function flipCamera() {
+    facingMode = facingMode === "environment" ? "user" : "environment";
+    torchOn = false;
+    els.torchBtn.setAttribute("aria-pressed", "false");
+    await startCamera();
+  }
+
+  async function toggleTorch() {
+    if (!track?.getCapabilities?.().torch) return;
+    torchOn = !torchOn;
+    try {
+      await track.applyConstraints({ advanced: [{ torch: torchOn }] });
+      els.torchBtn.setAttribute("aria-pressed", String(torchOn));
+    } catch {
+      torchOn = false;
+      els.torchBtn.setAttribute("aria-pressed", "false");
+      toast("此裝置不支援閃光燈");
+    }
+  }
+
+  function capturePhoto() {
+    const source = sourceEl();
+    const sourceW = demoMode ? source.width : source.videoWidth;
+    const sourceH = demoMode ? source.height : source.videoHeight;
+    if (!sourceW) {
+      toast("相機尚未就緒");
+      return;
+    }
+
+    const canvas = els.capture;
+    canvas.width = sourceW;
+    canvas.height = sourceH;
+    const ctx = canvas.getContext("2d");
+
+    ctx.filter = activeFilter.css;
+    if (!demoMode && facingMode === "user") {
+      ctx.translate(canvas.width, 0);
+      ctx.scale(-1, 1);
+    }
+    ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.filter = "none";
+
+    // Vignette
+    const g = ctx.createRadialGradient(
+      canvas.width / 2,
+      canvas.height / 2,
+      Math.min(canvas.width, canvas.height) * 0.25,
+      canvas.width / 2,
+      canvas.height / 2,
+      Math.max(canvas.width, canvas.height) * 0.7
+    );
+    g.addColorStop(0, "rgba(0,0,0,0)");
+    g.addColorStop(1, `rgba(0,0,0,${0.35 + activeFilter.vignette * 0.45})`);
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Soft grain
+    const grainStrength = Math.floor(18 + activeFilter.grain * 40);
+    const image = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const data = image.data;
+    for (let i = 0; i < data.length; i += 16) {
+      const n = (Math.random() - 0.5) * grainStrength;
+      data[i] = Math.min(255, Math.max(0, data[i] + n));
+      data[i + 1] = Math.min(255, Math.max(0, data[i + 1] + n));
+      data[i + 2] = Math.min(255, Math.max(0, data[i + 2] + n));
+    }
+    ctx.putImageData(image, 0, 0);
+
+    els.flash.classList.remove("burst");
+    void els.flash.offsetWidth;
+    els.flash.classList.add("burst");
+
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        toast("儲存失敗");
+        return;
+      }
+      if (lastObjectUrl) URL.revokeObjectURL(lastObjectUrl);
+      lastObjectUrl = URL.createObjectURL(blob);
+      els.thumb.href = lastObjectUrl;
+      els.thumb.style.backgroundImage = `url("${lastObjectUrl}")`;
+      els.thumb.classList.add("has-photo");
+      els.thumb.download = `flashback-${activeFilter.id}-${Date.now()}.jpg`;
+    }, "image/jpeg", 0.92);
+  }
+
+  els.filters.addEventListener("click", (e) => {
+    const card = e.target.closest(".filter-card");
+    if (!card) return;
+    const filter = FILTERS.find((f) => f.id === card.dataset.id);
+    if (filter) applyFilter(filter);
+  });
+
+  els.start.addEventListener("click", startCamera);
+  els.demoBtn.addEventListener("click", startDemo);
+  els.shutter.addEventListener("click", capturePhoto);
+  els.flip.addEventListener("click", flipCamera);
+  els.torchBtn.addEventListener("click", toggleTorch);
+  els.gridBtn.addEventListener("click", () => {
+    const on = els.grid.hidden;
+    els.grid.hidden = !on;
+    els.gridBtn.setAttribute("aria-pressed", String(on));
+  });
+
+  window.addEventListener("resize", resizeFx);
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+      cancelAnimationFrame(fxRaf);
+    } else if (stream) {
+      paintFx();
+    }
+  });
+
+  renderFilters();
+  applyFilter(FILTERS[0]);
+})();
+</script>
+</body>
+</html>
