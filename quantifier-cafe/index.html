@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ff6b35">
+<title>Quantifier Café · 3A Ch.3 Food and drinks</title>
+<style>
+:root {
+  --ink: #2a1810;
+  --cream: #fff8ee;
+  --pink: #ff6b9d;
+  --orange: #ff6b35;
+  --yellow: #ffd23f;
+  --mint: #3dde7a;
+  --sky: #4fc3f7;
+  --purple: #a78bfa;
+  --red: #ff4757;
+  --card: #ffffff;
+}
+* { box-sizing: border-box; }
+html, body {
+  margin: 0; height: 100%;
+  font-family: "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+  background: #1a0f0a;
+  color: var(--ink);
+  -webkit-tap-highlight-color: transparent;
+}
+button { font: inherit; cursor: pointer; color: inherit; touch-action: manipulation; }
+button:focus-visible { outline: 4px solid var(--yellow); outline-offset: 2px; }
+button:disabled { opacity: 0.55; cursor: default; }
+
+#app { height: 100%; display: flex; flex-direction: column; overflow: hidden; }
+
+.awning {
+  height: 16px; flex: none;
+  background: repeating-linear-gradient(90deg,
+    #e63946 0 22px, #fff8ee 22px 44px, #457b9d 44px 66px, #fff8ee 66px 88px);
+  box-shadow: 0 4px 0 rgba(0,0,0,.15);
+}
+
+.screen {
+  flex: 1; overflow: auto;
+  display: none; flex-direction: column;
+  padding: 12px 16px 20px;
+}
+.screen.on { display: flex; }
+
+#start {
+  background:
+    radial-gradient(ellipse at 20% 10%, #ffe08a 0, transparent 45%),
+    radial-gradient(ellipse at 90% 0%, #ffb4c8 0, transparent 40%),
+    linear-gradient(#7ec8ff 0 38%, #f5c98a 38% 42%, #e8a05a 42% 100%);
+}
+.stall-sign {
+  align-self: center;
+  background: var(--orange);
+  color: #fff;
+  border: 5px solid var(--ink);
+  border-radius: 24px;
+  padding: 10px 28px;
+  font-size: clamp(1.6rem, 5.5vw, 2.6rem);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  text-shadow: 3px 3px 0 #c4441a;
+  box-shadow: 6px 6px 0 var(--ink);
+  margin-top: 8px;
+  transform: rotate(-2deg);
+}
+.subtitle {
+  text-align: center; font-weight: 800; margin: 14px 0 4px;
+  font-size: clamp(1.05rem, 3vw, 1.35rem);
+  background: #fff; border: 3px solid var(--ink); border-radius: 999px;
+  padding: 6px 16px; align-self: center;
+}
+.food-parade {
+  display: flex; flex-wrap: wrap; justify-content: center;
+  gap: 8px; margin: 12px 0; font-size: 2.2rem;
+  animation: bob 2.4s ease-in-out infinite;
+}
+@keyframes bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+.how {
+  background: #fffef8; border: 4px solid var(--ink); border-radius: 20px;
+  padding: 14px 16px; max-width: 520px; margin: 8px auto; width: 100%;
+  box-shadow: 5px 5px 0 var(--ink);
+}
+.how h2 { margin: 0 0 8px; font-size: 1.25rem; }
+.how ul { margin: 0; padding-left: 1.2em; font-weight: 700; line-height: 1.45; }
+.how li { margin: 4px 0; }
+.level-chips {
+  display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 10px 0 4px;
+}
+.chip {
+  background: #fff; border: 3px solid var(--ink); border-radius: 999px;
+  padding: 6px 14px; font-weight: 800; font-size: .95rem;
+  box-shadow: 3px 3px 0 var(--ink);
+}
+.chip.l1 { background: #b8f0ff; }
+.chip.l2 { background: #ffd6ef; }
+.btn-big {
+  display: block; width: min(360px, 100%); margin: 16px auto 8px;
+  background: var(--mint); color: var(--ink);
+  border: 5px solid var(--ink); border-radius: 999px;
+  padding: 16px 24px; font-size: 1.5rem; font-weight: 900;
+  box-shadow: 0 8px 0 var(--ink);
+  transition: transform .08s, box-shadow .08s;
+}
+.btn-big:active { transform: translateY(4px); box-shadow: 0 4px 0 var(--ink); }
+.btn-big.orange { background: var(--orange); color: #fff; text-shadow: 1px 1px 0 #c4441a; }
+.btn-big.yellow { background: var(--yellow); }
+.btn-big.sky { background: var(--sky); }
+.tag {
+  text-align: center; font-weight: 700; opacity: .8; margin: 4px 0 0;
+  font-size: .95rem;
+}
+
+#hud {
+  display: none; flex: none; flex-wrap: wrap; gap: 8px; align-items: center;
+  padding: 8px 12px; background: #2a1810; color: #fff;
+  border-bottom: 5px solid var(--yellow);
+}
+#hud.on { display: flex; }
+.stat {
+  background: #4a2c20; border: 2px solid #fff; border-radius: 12px;
+  padding: 4px 10px; font-weight: 800; font-size: .95rem;
+  display: inline-flex; align-items: center; gap: 4px;
+}
+.stat.level { background: var(--purple); }
+.stat.combo { background: var(--pink); color: #fff; border-color: #fff;
+  display: none; animation: pulse .4s ease; }
+.stat.combo.on { display: inline-flex; }
+@keyframes pulse {
+  0% { transform: scale(1.25); } 100% { transform: scale(1); }
+}
+#timer-wrap { display: none !important;
+  flex: 1 1 100%; display: flex; align-items: center; gap: 8px;
+}
+#timer-track {
+  flex: 1; height: 18px; background: #1a0f0a; border: 2px solid #fff;
+  border-radius: 999px; overflow: hidden;
+}
+#timer-fill {
+  height: 100%; width: 100%; background: linear-gradient(90deg, var(--mint), var(--yellow), var(--orange));
+  transition: width .05s linear;
+  border-radius: 999px;
+}
+#timer-fill.low { background: var(--red); animation: blink .4s infinite; }
+@keyframes blink { 50% { opacity: .55; } }
+
+#play {
+  background: linear-gradient(180deg, #ffe8c8 0%, #ffd4a3 40%, #f0b87a 100%);
+  position: relative;
+}
+.q-card {
+  background: var(--card); border: 5px solid var(--ink); border-radius: 24px;
+  padding: 14px 16px 12px; max-width: 640px; width: 100%; margin: 8px auto;
+  box-shadow: 8px 8px 0 rgba(42,24,16,.35);
+  position: relative;
+}
+.q-badge {
+  display: inline-block; background: var(--purple); color: #fff;
+  border: 3px solid var(--ink); border-radius: 999px;
+  padding: 2px 12px; font-weight: 800; font-size: .85rem; margin-bottom: 8px;
+}
+.q-badge.plural { background: var(--pink); }
+
+.pic-frame {
+  background: linear-gradient(160deg, #e8f7ff, #fff5e6);
+  border: 4px solid var(--ink);
+  border-radius: 20px;
+  padding: 10px;
+  margin: 0 auto 10px;
+  max-width: 280px;
+  box-shadow: inset 0 0 0 3px #fff, 4px 4px 0 rgba(42,24,16,.2);
+  text-align: center;
+  position: relative;
+}
+.pic-frame svg { width: 100%; height: auto; max-height: 160px; display: block; margin: 0 auto; }
+.pic-count {
+  position: absolute; top: -10px; right: -10px;
+  background: var(--yellow); border: 3px solid var(--ink); border-radius: 999px;
+  width: 42px; height: 42px; display: flex; align-items: center; justify-content: center;
+  font-weight: 900; font-size: 1.2rem; box-shadow: 3px 3px 0 var(--ink);
+}
+.pic-label {
+  font-size: 2.8rem; line-height: 1; margin: 4px 0;
+  filter: drop-shadow(2px 3px 0 rgba(0,0,0,.12));
+}
+.pic-multi {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 4px;
+  font-size: 2.1rem; line-height: 1; padding: 6px 0;
+}
+
+.q-text {
+  font-size: clamp(1.1rem, 3.4vw, 1.4rem); font-weight: 800;
+  text-align: center; line-height: 1.35; margin: 0 0 12px;
+}
+.choices { display: grid; gap: 10px; }
+.choice {
+  background: #fffef8; border: 4px solid var(--ink); border-radius: 18px;
+  padding: 14px 12px; font-weight: 800; font-size: clamp(1rem, 2.8vw, 1.2rem);
+  text-align: center; box-shadow: 0 5px 0 var(--ink);
+  transition: transform .08s, box-shadow .08s, background .15s;
+  line-height: 1.3;
+}
+.choice:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 2px 0 var(--ink); }
+.choice.ok { background: var(--mint); animation: pop .35s ease; }
+.choice.bad { background: #ff8a9a; animation: shake .4s ease; }
+@keyframes pop {
+  0% { transform: scale(1); } 40% { transform: scale(1.08); } 100% { transform: scale(1); }
+}
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-8px); }
+  40% { transform: translateX(8px); }
+  60% { transform: translateX(-6px); }
+  80% { transform: translateX(6px); }
+}
+.q-card.shake { animation: shake .4s ease; }
+.fb {
+  text-align: center; font-weight: 900; font-size: 1.1rem; min-height: 1.4em;
+  margin: 10px 0 0;
+}
+.fb.ok { color: #0a7a3a; }
+.fb.bad { color: #c0392b; }
+
+.floatie {
+  position: fixed; pointer-events: none; z-index: 50;
+  font-weight: 900; font-size: 1.6rem;
+  animation: floatUp 1s ease forwards;
+  text-shadow: 2px 2px 0 #fff;
+}
+@keyframes floatUp {
+  0% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-80px) scale(1.3); }
+}
+.confetti {
+  position: fixed; width: 10px; height: 10px; border-radius: 2px;
+  pointer-events: none; z-index: 40;
+  animation: confettiFall .9s ease-out forwards;
+}
+@keyframes confettiFall {
+  0% { transform: translateY(0) rotate(0); opacity: 1; }
+  100% { transform: translateY(120px) rotate(360deg); opacity: 0; }
+}
+
+#gate {
+  background:
+    radial-gradient(ellipse at 50% 20%, #ffd23f 0, transparent 45%),
+    linear-gradient(#7ec8ff, #fff8ee 55%, #f5c98a);
+}
+.gate-card {
+  background: #fffef8; border: 5px solid var(--ink); border-radius: 24px;
+  padding: 20px 18px; max-width: 480px; width: 100%; margin: 24px auto;
+  box-shadow: 8px 8px 0 var(--ink); text-align: center;
+}
+.gate-card h1 { margin: 0 0 8px; font-size: clamp(1.6rem, 5vw, 2.2rem); }
+.gate-card p { font-weight: 700; font-size: 1.1rem; margin: 8px 0 16px; }
+
+#end {
+  background:
+    radial-gradient(ellipse at 50% 0%, #ffd23f 0, transparent 50%),
+    linear-gradient(#7ec8ff, #fff8ee 50%, #f5c98a);
+}
+.trophy {
+  font-size: 4.5rem; text-align: center; margin: 8px 0 0;
+  animation: bob 1.8s ease-in-out infinite;
+}
+.end-title {
+  text-align: center; font-size: clamp(1.8rem, 5vw, 2.6rem); font-weight: 900;
+  margin: 4px 0;
+}
+.end-score {
+  text-align: center; font-size: 1.3rem; font-weight: 800; margin: 4px 0 12px;
+}
+.stars { text-align: center; font-size: 2.4rem; letter-spacing: 4px; margin: 0 0 8px; }
+.review {
+  background: #fffef8; border: 4px solid var(--ink); border-radius: 20px;
+  padding: 12px 14px; max-width: 640px; width: 100%; margin: 8px auto;
+  box-shadow: 5px 5px 0 var(--ink);
+}
+.review h2 { margin: 0 0 8px; font-size: 1.15rem; }
+.review-item {
+  background: #fff; border: 3px solid #e8d5c0; border-radius: 14px;
+  padding: 10px; margin: 8px 0; font-weight: 700; font-size: .95rem;
+}
+.review-item .q { margin-bottom: 4px; }
+.review-item .wrong { color: #c0392b; }
+.review-item .right { color: #0a7a3a; }
+.perfect {
+  text-align: center; font-weight: 800; font-size: 1.15rem;
+  background: var(--mint); border: 3px solid var(--ink); border-radius: 14px;
+  padding: 12px; max-width: 400px; margin: 8px auto;
+}
+.btn-row {
+  display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;
+  margin: 14px 0 8px;
+}
+.btn-row .btn-big { width: auto; min-width: 160px; margin: 0; font-size: 1.15rem; padding: 12px 20px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="awning"></div>
+
+  <div id="hud">
+    <span class="stat level" id="leveltag">Lv 1 · Singular</span>
+    <span class="stat" id="lives">❤️❤️❤️</span>
+    <span class="stat" id="score">⭐ 0</span>
+    <span class="stat" id="qnum">1 / 18</span>
+    <span class="stat combo" id="combo">🔥 x2</span>
+    <div id="timer-wrap">
+      <span class="stat" style="border:none;background:transparent;padding:0">⏱️</span>
+      <div id="timer-track"><div id="timer-fill"></div></div>
+    </div>
+  </div>
+
+  <section id="start" class="screen on">
+    <div class="stall-sign">🥤 Quantifier Café</div>
+    <p class="subtitle">3A Chapter 3 · Food and drinks</p>
+    <div class="food-parade">🍕 ☕ 🥤 🍟 🍗 🍰 💧 🌽</div>
+    <div class="level-chips">
+      <span class="chip l1">Level 1 · a … of (singular)</span>
+      <span class="chip l2">Level 2 · two / three … of (plural)</span>
+    </div>
+    <div class="how">
+      <h2>How to play</h2>
+      <ul>
+        <li>Look at the <b>picture</b> — pick the correct quantifier!</li>
+        <li><b>Level 1</b>: one item → <i>a can of cola</i></li>
+        <li><b>Level 2</b> unlocks after Level 1 → <i>two cups of lemon tea</i></li>
+        <li>3 lives ❤️ · no timer · combo 🔥 · review at the end</li>
+      </ul>
+    </div>
+    <button class="btn-big" id="btn-start" type="button">Start Level 1! ▶</button>
+    <p class="tag">Primary 3 · Longman Elect · Containers only (no prices)</p>
+  </section>
+
+  <section id="play" class="screen">
+    <div class="q-card" id="qcard">
+      <div class="q-badge" id="qbadge">Look &amp; choose</div>
+      <div class="pic-frame" id="picframe">
+        <span class="pic-count" id="piccount" hidden>1</span>
+        <div id="picart"></div>
+      </div>
+      <p class="q-text" id="qtext"></p>
+      <div class="choices" id="choices"></div>
+      <p class="fb" id="fb"></p>
+    </div>
+  </section>
+
+  <section id="gate" class="screen">
+    <div class="gate-card">
+      <div style="font-size:3.5rem">🎉</div>
+      <h1>Level 1 complete!</h1>
+      <p>Great job with <b>a … of</b>!<br>Ready for <b>two / three … of</b>?</p>
+      <button class="btn-big sky" id="btn-level2" type="button">Unlock Level 2 ▶</button>
+    </div>
+  </section>
+
+  <section id="end" class="screen">
+    <div class="trophy" id="trophy">🏆</div>
+    <h1 class="end-title" id="end-title">Well done!</h1>
+    <div class="stars" id="stars">⭐⭐⭐</div>
+    <p class="end-score" id="end-score"></p>
+    <div id="review-box"></div>
+    <div class="btn-row">
+      <button class="btn-big yellow" id="btn-again" type="button">Play again 🔄</button>
+    </div>
+  </section>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var TIME_MS = 14000;
+  var MAX_LIVES = 3;
+
+  /* ---- Food picture SVGs (inline, kid-friendly) ---- */
+  var PICS = {
+    cola: function () {
+      return '<svg viewBox="0 0 120 140" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+        '<ellipse cx="60" cy="128" rx="28" ry="6" fill="#000" opacity=".15"/>' +
+        '<rect x="38" y="28" width="44" height="90" rx="10" fill="#e63946" stroke="#2a1810" stroke-width="3"/>' +
+        '<rect x="42" y="36" width="36" height="22" rx="4" fill="#fff" opacity=".9"/>' +
+        '<text x="60" y="52" text-anchor="middle" font-size="11" font-weight="900" fill="#e63946" font-family="sans-serif">COLA</text>' +
+        '<rect x="48" y="14" width="24" height="16" rx="3" fill="#bbb" stroke="#2a1810" stroke-width="2.5"/>' +
+        '<ellipse cx="60" cy="14" rx="12" ry="5" fill="#ddd" stroke="#2a1810" stroke-width="2"/>' +
+        '</svg>';
+    },
+    water: function () {
+      return '<svg viewBox="0 0 120 140" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+        '<ellipse cx="60" cy="128" rx="26" ry="6" fill="#000" opacity=".15"/>' +
+        '<path d="M42 40 h36 l8 70 a18 18 0 0 1-18 14 h-16 a18 18 0 0 1-18-14 z" fill="#4fc3f7" stroke="#2a1810" stroke-width="3"/>' +
+        '<path d="M48 70 q12 8 24 0" fill="none" stroke="#fff" stroke-width="3" opacity=".6"/>' +
+        '<rect x="52" y="18" width="16" height="24" rx="3" fill="#90caf9" stroke="#2a1810" stroke-width="2.5"/>' +
+        '<rect x="48" y="12" width="24" height="10" rx="3" fill="#42a5f5" stroke="#2a1810" stroke-width="2.5"/>' +
+        '</svg>';
+    },
+    lemontea: function () {
+      return '<svg viewBox="0 0 120 140" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+        '<ellipse cx="60" cy="128" rx="32" ry="6" fill="#000" opacity=".15"/>' +
+        '<path d="M30 50 h60 l-6 60 a24 18 0 0 1-48 0 z" fill="#fff3e0" stroke="#2a1810" stroke-width="3"/>' +
+        '<path d="M34 55 h52 l-4 40 a20 14 0 0 1-44 0 z" fill="#ffcc80"/>' +
+        '<ellipse cx="60" cy="50" rx="30" ry="8" fill="#ffe0b2" stroke="#2a1810" stroke-width="3"/>' +
+        '<circle cx="55" cy="48" r="6" fill="#ffeb3b" stroke="#2a1810" stroke-width="2"/>' +
+        '<path d="M72 30 q10-18 18-8" fill="none" stroke="#66bb6a" stroke-width="4" stroke-linecap="round"/>' +
+        '</svg>';
+    },
+    coffee: function () {
+      return '<svg viewBox="0 0 120 140" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+        '<ellipse cx="55" cy="128" rx="30" ry="6" fill="#000" opacity=".15"/>' +
+        '<path d="M28 48 h54 l-5 62 a22 16 0 0 1-44 0 z" fill="#fff" stroke="#2a1810" stroke-width="3"/>' +
+        '<path d="M32 54 h46 l-4 48 a18 12 0 0 1-38 0 z" fill="#6d4c41"/>' +
+        '<ellipse cx="55" cy="48" rx="27" ry="8" fill="#efebe9" stroke="#2a1810" stroke-width="3"/>' +
+        '<path d="M82 58 h14 a12 16 0 0 1 0 32 h-10" fill="none" stroke="#2a1810" stroke-width="3.5"/>' +
+        '<path d="M48 28 q4-12 0-18 M58 26 q4-10 0-16" fill="none" stroke="#90a4ae" stroke-width="2.5" stroke-linecap="round"/>' +
+        '</svg>';
+    },
+    hotchoco: function () {
+      return '<svg viewBox="0 0 120 140" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+        '<ellipse cx="55" cy="128" rx="30" ry="6" fill="#000" opacity=".15"/>' +
+        '<path d="M28 48 h54 l-5 62 a22 16 0 0 1-44 0 z" fill="#fff" stroke="#2a1810" stroke-width="3"/>' +
+        '<path d="M32 54 h46 l-4 48 a18 12 0 0 1-38 0 z" fill="#5d4037"/>' +
+        '<ellipse cx="55" cy="48" rx="27" ry="8" fill="#efebe9" stroke="#2a1810" stroke-width="3"/>' +
+        '<ellipse cx="50" cy="44" rx="10" ry="5" fill="#fff" opacity=".9"/>' +
+        '<ellipse cx="62" cy="46" rx="7" ry="4" fill="#fff" opacity=".7"/>' +
+        '<path d="M82 58 h14 a12 16 0 0 1 0 32 h-10" fill="none" stroke="#2a1810" stroke-width="3.5"/>' +
+        '</svg>';
+    },
+    pizza: function () {
+      return '<svg viewBox="0 0 120 140" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+        '<ellipse cx="60" cy="128" rx="34" ry="6" fill="#000" opacity=".12"/>' +
+        '<path d="M60 22 L100 110 L20 110 Z" fill="#ffcc80" stroke="#2a1810" stroke-width="3"/>' +
+        '<path d="M60 34 L90 104 L30 104 Z" fill="#e53935"/>' +
+        '<circle cx="52" cy="70" r="7" fill="#ffeb3b" stroke="#2a1810" stroke-width="2"/>' +
+        '<circle cx="70" cy="82" r="6" fill="#ffeb3b" stroke="#2a1810" stroke-width="2"/>' +
+        '<circle cx="58" cy="92" r="5" fill="#66bb6a" stroke="#2a1810" stroke-width="2"/>' +
+        '<path d="M20 110 Q60 122 100 110" fill="none" stroke="#2a1810" stroke-width="3"/>' +
+        '</svg>';
+    },
+    cake: function () {
+      return '<svg viewBox="0 0 120 140" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+        '<ellipse cx="60" cy="128" rx="36" ry="6" fill="#000" opacity=".12"/>' +
+        '<path d="M28 70 L60 30 L92 70 L92 110 L28 110 Z" fill="#f8bbd0" stroke="#2a1810" stroke-width="3"/>' +
+        '<path d="M28 70 L60 30 L92 70" fill="#fff" stroke="#2a1810" stroke-width="3"/>' +
+        '<rect x="28" y="88" width="64" height="10" fill="#ec407a"/>' +
+        '<circle cx="50" cy="78" r="4" fill="#fff"/>' +
+        '<circle cx="70" cy="82" r="4" fill="#fff"/>' +
+        '<rect x="56" y="18" width="8" height="16" fill="#ffeb3b" stroke="#2a1810" stroke-width="2"/>' +
+        '<path d="M60 12 l3 8 h-6 z" fill="#e53935"/>' +
+        '</svg>';
+    },
+    fries: function () {
+      return '<svg viewBox="0 0 120 140" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+        '<ellipse cx="60" cy="128" rx="30" ry="6" fill="#000" opacity=".15"/>' +
+        '<path d="M30 70 L38 118 L82 118 L90 70 Z" fill="#e53935" stroke="#2a1810" stroke-width="3"/>' +
+        '<rect x="42" y="28" width="10" height="50" rx="3" fill="#ffd54f" stroke="#2a1810" stroke-width="2" transform="rotate(-8 47 53)"/>' +
+        '<rect x="54" y="22" width="10" height="55" rx="3" fill="#ffca28" stroke="#2a1810" stroke-width="2"/>' +
+        '<rect x="66" y="30" width="10" height="48" rx="3" fill="#ffd54f" stroke="#2a1810" stroke-width="2" transform="rotate(6 71 54)"/>' +
+        '<text x="60" y="98" text-anchor="middle" font-size="10" font-weight="900" fill="#fff" font-family="sans-serif">FRIES</text>' +
+        '</svg>';
+    },
+    chips: function () {
+      return '<svg viewBox="0 0 120 140" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+        '<ellipse cx="60" cy="128" rx="28" ry="6" fill="#000" opacity=".15"/>' +
+        '<rect x="32" y="36" width="56" height="80" rx="8" fill="#7e57c2" stroke="#2a1810" stroke-width="3"/>' +
+        '<rect x="38" y="48" width="44" height="28" rx="4" fill="#fff59d" stroke="#2a1810" stroke-width="2"/>' +
+        '<ellipse cx="50" cy="58" rx="8" ry="5" fill="#ffcc80" transform="rotate(-20 50 58)"/>' +
+        '<ellipse cx="66" cy="64" rx="9" ry="5" fill="#ffb74d" transform="rotate(15 66 64)"/>' +
+        '<text x="60" y="100" text-anchor="middle" font-size="9" font-weight="900" fill="#fff" font-family="sans-serif">CHIPS</text>' +
+        '</svg>';
+    },
+    corn: function () {
+      return '<svg viewBox="0 0 120 140" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+        '<ellipse cx="60" cy="128" rx="36" ry="6" fill="#000" opacity=".12"/>' +
+        '<ellipse cx="60" cy="108" rx="42" ry="14" fill="#fff" stroke="#2a1810" stroke-width="3"/>' +
+        '<path d="M22 70 Q22 40 60 36 Q98 40 98 70 L90 108 Q60 118 30 108 Z" fill="#fffde7" stroke="#2a1810" stroke-width="3"/>' +
+        '<ellipse cx="60" cy="72" rx="28" ry="18" fill="#ffeb3b" stroke="#2a1810" stroke-width="2.5"/>' +
+        '<circle cx="48" cy="68" r="3" fill="#f9a825"/><circle cx="60" cy="66" r="3" fill="#f9a825"/>' +
+        '<circle cx="72" cy="70" r="3" fill="#f9a825"/><circle cx="54" cy="78" r="3" fill="#f9a825"/>' +
+        '<circle cx="66" cy="76" r="3" fill="#f9a825"/>' +
+        '</svg>';
+    },
+    wings: function () {
+      return '<svg viewBox="0 0 120 140" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+        '<ellipse cx="60" cy="128" rx="36" ry="6" fill="#000" opacity=".12"/>' +
+        '<rect x="22" y="48" width="76" height="70" rx="8" fill="#ffcc80" stroke="#2a1810" stroke-width="3"/>' +
+        '<rect x="22" y="48" width="76" height="18" fill="#e53935" stroke="#2a1810" stroke-width="3"/>' +
+        '<ellipse cx="45" cy="88" rx="14" ry="10" fill="#ef6c00" stroke="#2a1810" stroke-width="2" transform="rotate(-25 45 88)"/>' +
+        '<ellipse cx="72" cy="90" rx="14" ry="10" fill="#ef6c00" stroke="#2a1810" stroke-width="2" transform="rotate(20 72 90)"/>' +
+        '<rect x="38" y="78" width="5" height="18" rx="2" fill="#fffde7" stroke="#2a1810" stroke-width="1.5" transform="rotate(-25 40 87)"/>' +
+        '<rect x="78" y="82" width="5" height="18" rx="2" fill="#fffde7" stroke="#2a1810" stroke-width="1.5" transform="rotate(20 80 91)"/>' +
+        '<text x="60" y="61" text-anchor="middle" font-size="9" font-weight="900" fill="#fff" font-family="sans-serif">WINGS</text>' +
+        '</svg>';
+    }
+  };
+
+  function picHTML(key, count) {
+    count = count || 1;
+    if (count === 1) {
+      return (PICS[key] ? PICS[key]() : '') +
+        '<div class="pic-label" style="font-size:0;height:0;overflow:hidden" aria-hidden="true"></div>';
+    }
+    var parts = [];
+    for (var i = 0; i < count; i++) {
+      parts.push('<div style="width:' + (count >= 3 ? '30%' : '42%') + ';display:inline-block;vertical-align:middle">' +
+        (PICS[key] ? PICS[key]() : '') + '</div>');
+    }
+    return '<div class="pic-multi" style="display:flex;flex-wrap:wrap;justify-content:center;gap:2px">' + parts.join('') + '</div>';
+  }
+
+  /* ---- Questions: 18 singular + 18 plural = 36 ---- */
+  var LEVEL1 = [
+    { key: "cola", count: 1, prompt: "Look at the picture. Choose the correct phrase.",
+      choices: ["a can of cola", "a cup of cola", "a bottle of cola", "a slice of cola"], answer: 0 },
+    { key: "water", count: 1, prompt: "Look at the picture. Choose the correct phrase.",
+      choices: ["a bottle of water", "a cup of water", "a can of water", "a bowl of water"], answer: 0 },
+    { key: "lemontea", count: 1, prompt: "Look at the picture. Choose the correct phrase.",
+      choices: ["a cup of lemon tea", "a can of lemon tea", "a bottle of lemon tea", "a packet of lemon tea"], answer: 0 },
+    { key: "coffee", count: 1, prompt: "Look at the picture. Choose the correct phrase.",
+      choices: ["a cup of coffee", "a can of coffee", "a box of coffee", "a slice of coffee"], answer: 0 },
+    { key: "hotchoco", count: 1, prompt: "Look at the picture. Choose the correct phrase.",
+      choices: ["a cup of hot chocolate", "a can of hot chocolate", "a packet of hot chocolate", "a bottle of hot chocolate"], answer: 0 },
+    { key: "pizza", count: 1, prompt: "Look at the picture. Choose the correct phrase.",
+      choices: ["a slice of pizza", "a can of pizza", "a bottle of pizza", "a packet of pizza"], answer: 0 },
+    { key: "cake", count: 1, prompt: "Look at the picture. Choose the correct phrase.",
+      choices: ["a slice of cake", "a bowl of cake", "a can of cake", "a box of cake"], answer: 0 },
+    { key: "fries", count: 1, prompt: "Look at the picture. Choose the correct phrase.",
+      choices: ["a packet of French fries", "a cup of French fries", "a can of French fries", "a slice of French fries"], answer: 0 },
+    { key: "chips", count: 1, prompt: "Look at the picture. Choose the correct phrase.",
+      choices: ["a packet of potato chips", "a bowl of potato chips", "a bottle of potato chips", "a slice of potato chips"], answer: 0 },
+    { key: "corn", count: 1, prompt: "Look at the picture. Choose the correct phrase.",
+      choices: ["a bowl of corn", "a can of corn", "a bottle of corn", "a slice of corn"], answer: 0 },
+    { key: "wings", count: 1, prompt: "Look at the picture. Choose the correct phrase.",
+      choices: ["a box of chicken wings", "a cup of chicken wings", "a can of chicken wings", "a bottle of chicken wings"], answer: 0 },
+    { key: "cola", count: 1, prompt: "Which quantifier goes with cola?",
+      choices: ["a can of cola", "a slice of cola", "a bowl of cola", "a packet of cola"], answer: 0 },
+    { key: "pizza", count: 1, prompt: "Which quantifier goes with pizza?",
+      choices: ["a slice of pizza", "a cup of pizza", "a can of pizza", "a bottle of pizza"], answer: 0 },
+    { key: "water", count: 1, prompt: "Which quantifier goes with water?",
+      choices: ["a bottle of water", "a slice of water", "a packet of water", "a box of water"], answer: 0 },
+    { key: "fries", count: 1, prompt: "Which quantifier goes with French fries?",
+      choices: ["a packet of French fries", "a can of French fries", "a bottle of French fries", "a slice of French fries"], answer: 0 },
+    { key: "corn", count: 1, prompt: "Which quantifier goes with corn?",
+      choices: ["a bowl of corn", "a slice of corn", "a bottle of corn", "a packet of corn"], answer: 0 },
+    { key: "wings", count: 1, prompt: "Which quantifier goes with chicken wings?",
+      choices: ["a box of chicken wings", "a cup of chicken wings", "a slice of chicken wings", "a bottle of chicken wings"], answer: 0 },
+    { key: "lemontea", count: 1, prompt: "Which quantifier goes with lemon tea?",
+      choices: ["a cup of lemon tea", "a can of lemon tea", "a box of lemon tea", "a slice of lemon tea"], answer: 0 }
+  ];
+
+  var LEVEL2 = [
+    { key: "pizza", count: 2, prompt: "Look! How many? Choose the correct phrase.",
+      choices: ["two slices of pizza", "two slice of pizza", "two cans of pizza", "a slices of pizza"], answer: 0 },
+    { key: "lemontea", count: 2, prompt: "Look! How many? Choose the correct phrase.",
+      choices: ["two cups of lemon tea", "two cup of lemon tea", "two cans of lemon tea", "a cups of lemon tea"], answer: 0 },
+    { key: "coffee", count: 3, prompt: "Look! How many? Choose the correct phrase.",
+      choices: ["three cups of coffee", "three cup of coffee", "three cans of coffee", "three slices of coffee"], answer: 0 },
+    { key: "cola", count: 2, prompt: "Look! How many? Choose the correct phrase.",
+      choices: ["two cans of cola", "two can of cola", "two cups of cola", "two bottles of cola"], answer: 0 },
+    { key: "water", count: 3, prompt: "Look! How many? Choose the correct phrase.",
+      choices: ["three bottles of water", "three bottle of water", "three cups of water", "three slices of water"], answer: 0 },
+    { key: "cake", count: 3, prompt: "Look! How many? Choose the correct phrase.",
+      choices: ["three slices of cake", "three slice of cake", "three cans of cake", "three bowls of cake"], answer: 0 },
+    { key: "fries", count: 2, prompt: "Look! How many? Choose the correct phrase.",
+      choices: ["two packets of French fries", "two packet of French fries", "two cups of French fries", "two cans of French fries"], answer: 0 },
+    { key: "chips", count: 3, prompt: "Look! How many? Choose the correct phrase.",
+      choices: ["three packets of potato chips", "three packet of potato chips", "three bowls of potato chips", "three slices of potato chips"], answer: 0 },
+    { key: "corn", count: 2, prompt: "Look! How many? Choose the correct phrase.",
+      choices: ["two bowls of corn", "two bowl of corn", "two cans of corn", "two bottles of corn"], answer: 0 },
+    { key: "wings", count: 2, prompt: "Look! How many? Choose the correct phrase.",
+      choices: ["two boxes of chicken wings", "two box of chicken wings", "two cups of chicken wings", "two cans of chicken wings"], answer: 0 },
+    { key: "hotchoco", count: 2, prompt: "Look! How many? Choose the correct phrase.",
+      choices: ["two cups of hot chocolate", "two cup of hot chocolate", "two cans of hot chocolate", "two packets of hot chocolate"], answer: 0 },
+    { key: "pizza", count: 3, prompt: "Pick the correct plural form.",
+      choices: ["three slices of pizza", "three slice of pizza", "three pizzas of slice", "a three slices of pizza"], answer: 0 },
+    { key: "lemontea", count: 3, prompt: "Pick the correct plural form.",
+      choices: ["three cups of lemon tea", "three cup of lemon tea", "three cans of lemon tea", "three cup of lemon teas"], answer: 0 },
+    { key: "cola", count: 3, prompt: "Pick the correct plural form.",
+      choices: ["three cans of cola", "three can of cola", "three cups of cola", "three can of colas"], answer: 0 },
+    { key: "water", count: 2, prompt: "Pick the correct plural form.",
+      choices: ["two bottles of water", "two bottle of water", "two cups of water", "two bottle of waters"], answer: 0 },
+    { key: "cake", count: 2, prompt: "Which sentence is correct for this picture?",
+      choices: ["two slices of cake", "two slice of cake", "two cans of cake", "a two slices of cake"], answer: 0 },
+    { key: "fries", count: 3, prompt: "Which sentence is correct for this picture?",
+      choices: ["three packets of French fries", "three packet of French fries", "three cups of French fries", "three packets of French fry"], answer: 0 },
+    { key: "corn", count: 3, prompt: "Which sentence is correct for this picture?",
+      choices: ["three bowls of corn", "three bowl of corn", "three bottles of corn", "three bowls of corns"], answer: 0 }
+  ];
+
+  LEVEL1.forEach(function (q) { q.level = 1; q.badge = "Level 1 · Singular"; });
+  LEVEL2.forEach(function (q) { q.level = 2; q.badge = "Level 2 · Plural"; });
+
+  var TOTAL = LEVEL1.length + LEVEL2.length;
+
+  var state = {
+    phase: "l1", // l1 | gate | l2
+    idx: 0,
+    score: 0,
+    lives: MAX_LIVES,
+    combo: 0,
+    bestCombo: 0,
+    wrongs: [],
+    order: [],
+    queue: [],
+    locked: false,
+    timerId: null,
+    timeLeft: TIME_MS,
+    lastTick: 0,
+    answeredTotal: 0
+  };
+
+  var el = {
+    start: document.getElementById("start"),
+    play: document.getElementById("play"),
+    gate: document.getElementById("gate"),
+    end: document.getElementById("end"),
+    hud: document.getElementById("hud"),
+    lives: document.getElementById("lives"),
+    score: document.getElementById("score"),
+    qnum: document.getElementById("qnum"),
+    combo: document.getElementById("combo"),
+    leveltag: document.getElementById("leveltag"),
+    timerFill: document.getElementById("timer-fill"),
+    qcard: document.getElementById("qcard"),
+    qbadge: document.getElementById("qbadge"),
+    picframe: document.getElementById("picframe"),
+    piccount: document.getElementById("piccount"),
+    picart: document.getElementById("picart"),
+    qtext: document.getElementById("qtext"),
+    choices: document.getElementById("choices"),
+    fb: document.getElementById("fb"),
+    trophy: document.getElementById("trophy"),
+    endTitle: document.getElementById("end-title"),
+    stars: document.getElementById("stars"),
+    endScore: document.getElementById("end-score"),
+    reviewBox: document.getElementById("review-box")
+  };
+
+  function shuffle(arr) {
+    var a = arr.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+
+  function showScreen(name) {
+    el.start.classList.toggle("on", name === "start");
+    el.play.classList.toggle("on", name === "play");
+    el.gate.classList.toggle("on", name === "gate");
+    el.end.classList.toggle("on", name === "end");
+    el.hud.classList.toggle("on", name === "play");
+  }
+
+  function hearts() {
+    var s = "";
+    for (var i = 0; i < MAX_LIVES; i++) s += i < state.lives ? "❤️" : "🖤";
+    return s;
+  }
+
+  function updateHud() {
+    el.lives.textContent = hearts();
+    el.score.textContent = "⭐ " + state.score;
+    el.qnum.textContent = (state.idx + 1) + " / " + state.queue.length;
+    if (state.phase === "l2") {
+      el.leveltag.textContent = "Lv 2 · Plural";
+    } else {
+      el.leveltag.textContent = "Lv 1 · Singular";
+    }
+    if (state.combo >= 2) {
+      el.combo.textContent = "🔥 x" + state.combo;
+      el.combo.classList.add("on");
+      el.combo.style.animation = "none";
+      void el.combo.offsetWidth;
+      el.combo.style.animation = "";
+    } else {
+      el.combo.classList.remove("on");
+    }
+  }
+
+  function stopTimer() {
+    if (state.timerId) {
+      cancelAnimationFrame(state.timerId);
+      state.timerId = null;
+    }
+  }
+
+  function startTimer() {
+    /* no time limit */
+    if (state.timerId) { cancelAnimationFrame(state.timerId); state.timerId = null; }
+    if (el.timerFill) {
+      el.timerFill.style.width = "100%";
+      el.timerFill.classList.remove("low");
+    }
+  }
+
+  function floatScore(text, color) {
+    var n = document.createElement("div");
+    n.className = "floatie";
+    n.textContent = text;
+    n.style.color = color || "#0a7a3a";
+    n.style.left = (40 + Math.random() * 40) + "%";
+    n.style.top = "42%";
+    document.body.appendChild(n);
+    setTimeout(function () { n.remove(); }, 1000);
+  }
+
+  function confettiBurst() {
+    var colors = ["#ff6b35", "#ffd23f", "#3dde7a", "#4fc3f7", "#ff6b9d", "#a78bfa"];
+    for (var i = 0; i < 14; i++) {
+      var c = document.createElement("div");
+      c.className = "confetti";
+      c.style.background = colors[i % colors.length];
+      c.style.left = (30 + Math.random() * 40) + "%";
+      c.style.top = (35 + Math.random() * 15) + "%";
+      c.style.width = (8 + Math.random() * 8) + "px";
+      c.style.height = (8 + Math.random() * 8) + "px";
+      c.style.animationDuration = (0.6 + Math.random() * 0.5) + "s";
+      document.body.appendChild(c);
+      (function (node) {
+        setTimeout(function () { node.remove(); }, 1000);
+      })(c);
+    }
+  }
+
+  function prepareChoices(q) {
+    var items = q.choices.map(function (text, i) {
+      return { text: text, correct: i === q.answer };
+    });
+    return shuffle(items);
+  }
+
+  function currentQ() {
+    return state.queue[state.order[state.idx]];
+  }
+
+  function renderQuestion() {
+    state.locked = false;
+    el.fb.textContent = "";
+    el.fb.className = "fb";
+    el.qcard.classList.remove("shake");
+
+    var q = currentQ();
+    el.qbadge.textContent = q.badge;
+    el.qbadge.className = "q-badge" + (q.level === 2 ? " plural" : "");
+    el.picart.innerHTML = picHTML(q.key, q.count);
+    if (q.count > 1) {
+      el.piccount.hidden = false;
+      el.piccount.textContent = String(q.count);
+    } else {
+      el.piccount.hidden = true;
+    }
+    el.qtext.textContent = q.prompt;
+
+    var items = prepareChoices(q);
+    el.choices.innerHTML = "";
+    el.choices.className = "choices";
+
+    items.forEach(function (item) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "choice";
+      b.textContent = item.text;
+      b.dataset.correct = item.correct ? "1" : "0";
+      b.addEventListener("click", function () { onAnswer(b, item.correct, q, item.text); });
+      el.choices.appendChild(b);
+    });
+
+    updateHud();
+    startTimer();
+  }
+
+  function lockChoices() {
+    var buttons = el.choices.querySelectorAll(".choice");
+    for (var i = 0; i < buttons.length; i++) buttons[i].disabled = true;
+  }
+
+  function revealCorrect() {
+    var buttons = el.choices.querySelectorAll(".choice");
+    for (var i = 0; i < buttons.length; i++) {
+      if (buttons[i].dataset.correct === "1") buttons[i].classList.add("ok");
+    }
+  }
+
+  function onAnswer(btn, correct, q, chosenText) {
+    if (state.locked) return;
+    state.locked = true;
+    stopTimer();
+    lockChoices();
+    state.answeredTotal += 1;
+
+    if (correct) {
+      btn.classList.add("ok");
+      state.combo += 1;
+      if (state.combo > state.bestCombo) state.bestCombo = state.combo;
+      var bonus = 10 + Math.min(state.combo, 8) * 2;
+      var gain = bonus;
+      state.score += gain;
+      el.fb.textContent = state.combo >= 2 ? ("Nice! Combo x" + state.combo + "  +" + gain) : ("Correct!  +" + gain);
+      el.fb.className = "fb ok";
+      floatScore("+" + gain, "#0a7a3a");
+      if (state.combo >= 3) confettiBurst();
+      setTimeout(nextOrEnd, 750);
+    } else {
+      btn.classList.add("bad");
+      el.qcard.classList.add("shake");
+      revealCorrect();
+      state.combo = 0;
+      state.lives -= 1;
+      state.wrongs.push({
+        prompt: q.prompt + " (" + q.choices[q.answer] + ")",
+        emoji: q.level === 2 ? "🔢" : "🖼️",
+        chosen: chosenText,
+        correct: q.choices[q.answer]
+      });
+      el.fb.textContent = "Oops!  −1 life";
+      el.fb.className = "fb bad";
+      floatScore("💔", "#c0392b");
+      updateHud();
+      if (state.lives <= 0) {
+        setTimeout(finishGame, 900);
+      } else {
+        setTimeout(nextOrEnd, 1100);
+      }
+    }
+  }
+
+  function onTimeout() {
+    if (state.locked) return;
+    state.locked = true;
+    lockChoices();
+    revealCorrect();
+    el.qcard.classList.add("shake");
+    var q = currentQ();
+    state.answeredTotal += 1;
+    state.combo = 0;
+    state.lives -= 1;
+    state.wrongs.push({
+      prompt: q.prompt + " (" + q.choices[q.answer] + ")",
+      emoji: "⏰",
+      chosen: "(too slow)",
+      correct: q.choices[q.answer]
+    });
+    el.fb.textContent = "Time's up!  −1 life";
+    el.fb.className = "fb bad";
+    floatScore("⏰", "#c0392b");
+    updateHud();
+    if (state.lives <= 0) {
+      setTimeout(finishGame, 900);
+    } else {
+      setTimeout(nextOrEnd, 1100);
+    }
+  }
+
+  function nextOrEnd() {
+    state.idx += 1;
+    if (state.lives <= 0) {
+      finishGame();
+      return;
+    }
+    if (state.idx >= state.queue.length) {
+      if (state.phase === "l1") {
+        stopTimer();
+        showScreen("gate");
+        confettiBurst();
+      } else {
+        finishGame();
+      }
+      return;
+    }
+    renderQuestion();
+  }
+
+  function startLevel2() {
+    state.phase = "l2";
+    state.idx = 0;
+    state.queue = LEVEL2;
+    state.order = shuffle(LEVEL2.map(function (_, i) { return i; }));
+    state.locked = false;
+    showScreen("play");
+    renderQuestion();
+  }
+
+  function starCount() {
+    var maxScore = TOTAL * 28;
+    var ratio = state.score / Math.max(maxScore * 0.5, 1);
+    if (state.wrongs.length === 0 && state.phase === "l2" && state.idx >= LEVEL2.length) return 3;
+    if (ratio >= 0.7 && state.lives >= 2) return 3;
+    if (ratio >= 0.4 || state.lives >= 1) return 2;
+    return 1;
+  }
+
+  function finishGame() {
+    stopTimer();
+    showScreen("end");
+    var stars = starCount();
+    var starStr = "";
+    for (var i = 0; i < 3; i++) starStr += i < stars ? "⭐" : "☆";
+    el.stars.textContent = starStr;
+
+    var cleared = state.phase === "l2" && state.idx >= LEVEL2.length && state.lives > 0;
+    if (state.wrongs.length === 0 && cleared) {
+      el.trophy.textContent = "🏆";
+      el.endTitle.textContent = "Quantifier champion!";
+    } else if (stars >= 3) {
+      el.trophy.textContent = "🎉";
+      el.endTitle.textContent = "Super server!";
+    } else if (stars === 2) {
+      el.trophy.textContent = "😊";
+      el.endTitle.textContent = "Good job!";
+    } else {
+      el.trophy.textContent = "💪";
+      el.endTitle.textContent = "Keep practising!";
+    }
+
+    el.endScore.textContent =
+      "Score: " + state.score +
+      "   ·   Best combo: x" + Math.max(state.bestCombo, state.combo || 0) +
+      "   ·   Answered: " + state.answeredTotal + "/" + TOTAL;
+
+    var box = el.reviewBox;
+    box.innerHTML = "";
+    if (state.wrongs.length === 0) {
+      var p = document.createElement("div");
+      p.className = "perfect";
+      p.textContent = "No mistakes — amazing! 🌟";
+      box.appendChild(p);
+    } else {
+      var rev = document.createElement("div");
+      rev.className = "review";
+      rev.innerHTML = "<h2>Review mistakes (" + state.wrongs.length + ")</h2>";
+      state.wrongs.forEach(function (w) {
+        var item = document.createElement("div");
+        item.className = "review-item";
+        item.innerHTML =
+          "<div class=\"q\">" + w.emoji + " " + escapeHtml(w.prompt) + "</div>" +
+          "<div class=\"wrong\">Your answer: " + escapeHtml(w.chosen) + "</div>" +
+          "<div class=\"right\">Correct: " + escapeHtml(w.correct) + "</div>";
+        rev.appendChild(item);
+      });
+      box.appendChild(rev);
+    }
+  }
+
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function startGame() {
+    state.phase = "l1";
+    state.idx = 0;
+    state.score = 0;
+    state.lives = MAX_LIVES;
+    state.combo = 0;
+    state.bestCombo = 0;
+    state.wrongs = [];
+    state.answeredTotal = 0;
+    state.queue = LEVEL1;
+    state.order = shuffle(LEVEL1.map(function (_, i) { return i; }));
+    state.locked = false;
+    showScreen("play");
+    renderQuestion();
+  }
+
+  document.getElementById("btn-start").addEventListener("click", startGame);
+  document.getElementById("btn-level2").addEventListener("click", startLevel2);
+  document.getElementById("btn-again").addEventListener("click", function () {
+    showScreen("start");
+  });
+
+  if (LEVEL1.length !== 18 || LEVEL2.length !== 18) {
+    console.warn("Expected 18+18 questions, got " + LEVEL1.length + "+" + LEVEL2.length);
+  }
+})();
+</script>
+</body>
+</html>
