@@ -494,13 +494,14 @@
 
   .sheet-actions {
     display: flex;
+    flex-wrap: wrap;
     gap: 10px;
     padding: 12px 16px;
   }
 
   .sheet-actions .primary,
   .sheet-actions .ghost {
-    flex: 1;
+    flex: 1 1 30%;
     min-height: 48px;
     border-radius: 14px;
     font-weight: 800;
@@ -508,6 +509,11 @@
 
   .ghost {
     border: 1px solid var(--line-strong);
+  }
+
+  .sheet-actions .ghost#btnSaveJpgMain {
+    border-color: var(--accent);
+    color: var(--accent);
   }
 
   .status {
@@ -572,7 +578,7 @@
       <div class="gate" id="gate">
         <div>
           <h1>CS <span>SCAN</span></h1>
-          <p>Scan receipts, notes, and paperwork into crisp multi-page PDFs — right in your browser.</p>
+          <p>Scan receipts, notes, and paperwork into crisp JPG images or multi-page PDFs — right in your browser.</p>
           <button type="button" class="primary" id="btnStart">Open camera</button>
         </div>
       </div>
@@ -585,7 +591,7 @@
       <div class="controls" id="controls">
         <button type="button" class="side-btn left" id="btnImport">Import</button>
         <button type="button" class="shutter" id="btnShutter" aria-label="Capture"></button>
-        <button type="button" class="side-btn right" id="btnExport" disabled>PDF</button>
+        <button type="button" class="side-btn right" id="btnExport" disabled>Export</button>
       </div>
       <div class="controls" id="reviewControls" hidden>
         <button type="button" class="side-btn left" id="btnRetake">Retake</button>
@@ -613,13 +619,14 @@
       <input class="title-field" id="docTitle" value="Untitled scan" maxlength="80">
       <div class="doc-preview" id="docPreview"></div>
       <div class="export-grid">
-        <button type="button" class="export-btn" id="btnSavePdf"><span>Share / save PDF</span><strong>PDF</strong></button>
-        <button type="button" class="export-btn" id="btnSaveJpg"><span>Save current pages as JPG</span><strong>JPG</strong></button>
+        <button type="button" class="export-btn" id="btnSaveJpg"><span>Download each page as image</span><strong>JPG</strong></button>
+        <button type="button" class="export-btn" id="btnSavePdf"><span>Share / save as document</span><strong>PDF</strong></button>
         <button type="button" class="export-btn" id="btnSaveTxt"><span>Copy OCR text (browser)</span><strong>TXT</strong></button>
       </div>
     </div>
     <div class="sheet-actions">
       <button type="button" class="ghost" id="btnAddMore">Add pages</button>
+      <button type="button" class="ghost" id="btnSaveJpgMain">Export JPG</button>
       <button type="button" class="primary" id="btnSavePdfMain">Export PDF</button>
     </div>
   </div>
@@ -673,6 +680,7 @@
     btnSavePdf: document.getElementById("btnSavePdf"),
     btnSavePdfMain: document.getElementById("btnSavePdfMain"),
     btnSaveJpg: document.getElementById("btnSaveJpg"),
+    btnSaveJpgMain: document.getElementById("btnSaveJpgMain"),
     btnSaveTxt: document.getElementById("btnSaveTxt"),
     btnAddMore: document.getElementById("btnAddMore")
   };
@@ -1214,14 +1222,48 @@
     toast("PDF downloaded");
   }
 
+  function sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  function dataUrlToBlob(dataUrl) {
+    const [header, base64] = dataUrl.split(",");
+    const mime = /data:(.*?);base64/.exec(header)?.[1] || "image/jpeg";
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return new Blob([bytes], { type: mime });
+  }
+
+  function downloadBlob(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.rel = "noopener";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
+  }
+
   async function exportJpgs() {
-    for (let i = 0; i < state.pages.length; i++) {
-      const a = document.createElement("a");
-      a.href = state.pages[i].dataUrl;
-      a.download = `${(els.docTitle.value || "scan").replace(/[^\w\-]+/g, "_")}_${i + 1}.jpg`;
-      a.click();
+    if (!state.pages.length) {
+      toast("Scan a page first");
+      return;
     }
-    toast("JPG downloads started");
+    const base = ((els.docTitle.value || "scan").trim() || "scan").replace(/[^\w\-]+/g, "_");
+    toast(state.pages.length === 1 ? "Downloading JPG…" : `Downloading ${state.pages.length} JPG files…`);
+    for (let i = 0; i < state.pages.length; i++) {
+      const page = state.pages[i];
+      const blob = dataUrlToBlob(page.dataUrl);
+      const name = state.pages.length === 1
+        ? `${base}.jpg`
+        : `${base}_page_${i + 1}.jpg`;
+      downloadBlob(blob, name);
+      if (i < state.pages.length - 1) await sleep(350);
+    }
+    toast(state.pages.length === 1 ? "JPG saved" : `${state.pages.length} JPG files saved`);
   }
 
   async function exportTxt() {
@@ -1331,6 +1373,7 @@
   els.btnSavePdf.addEventListener("click", exportPdf);
   els.btnSavePdfMain.addEventListener("click", exportPdf);
   els.btnSaveJpg.addEventListener("click", exportJpgs);
+  els.btnSaveJpgMain.addEventListener("click", exportJpgs);
   els.btnSaveTxt.addEventListener("click", exportTxt);
 
   function onPointerDown(e) {
