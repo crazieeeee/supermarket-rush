@@ -788,7 +788,7 @@
     ambientNight.intensity = t.amb;
     renderer.setClearColor(t.clear, 1);
     skyMat.color.setHex(t.sky);
-    scene.fog.density = t.fog;
+    if (scene.fog) scene.fog.density = t.fog;
   }
   applyTod('night');
 
