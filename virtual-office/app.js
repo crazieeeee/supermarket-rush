@@ -416,11 +416,13 @@
   // Shared slab under all rooms
   building.add(makeFloor(-20.5, 26.5, -10.5, 10.5, -0.12));
 
-  // Outer walls (back + sides), open front for dollhouse view
+  // Outer walls: back only (dollhouse sides — no full-height L/R walls that block low orbits)
   const WALL_H = 4.2;
+  const RAIL_H = 0.62;
   building.add(makeWall(3, -10.35, 47, WALL_H, 0.3)); // back
-  building.add(makeWall(-20.35, 0, 0.3, WALL_H, 21)); // left
-  building.add(makeWall(26.35, 0, 0.3, WALL_H, 21)); // right
+  // Knee-height rails mark footprint without occluding desks/cats
+  building.add(makeWall(-20.35, 0, 0.3, RAIL_H, 21)); // left rail
+  building.add(makeWall(26.35, 0, 0.3, RAIL_H, 21)); // right rail
 
   // Window strips on back wall
   for (let i = 0; i < 8; i++) {
@@ -657,19 +659,24 @@
   const avatarActors = [];
 
   // Shared cat geos (one set for all bots — cheap on phones)
-  const _catSeg = LOW ? 8 : 12;
+  const _catSeg = LOW ? 8 : 14;
   const catBodyGeo = new THREE.SphereGeometry(0.28, _catSeg, _catSeg);
   const catHeadGeo = new THREE.SphereGeometry(0.22, _catSeg, _catSeg);
   const catEarGeo = new THREE.ConeGeometry(0.09, 0.16, LOW ? 5 : 6);
-  const catEarInnerGeo = new THREE.ConeGeometry(0.05, 0.1, LOW ? 4 : 5);
+  const catEarInnerGeo = new THREE.ConeGeometry(0.055, 0.11, LOW ? 4 : 5);
   const catTuftGeo = new THREE.ConeGeometry(0.035, 0.1, 4);
   const catTailGeo = new THREE.CapsuleGeometry(0.045, 0.28, 4, LOW ? 6 : 8);
-  const catEyeGeo = new THREE.SphereGeometry(0.035, 6, 6);
-  const catNoseGeo = new THREE.SphereGeometry(0.028, 6, 6);
+  const catEyeGeo = new THREE.SphereGeometry(0.042, LOW ? 6 : 8, LOW ? 6 : 8);
+  const catEyeHlGeo = new THREE.SphereGeometry(0.014, 5, 5);
+  const catNoseGeo = new THREE.SphereGeometry(0.032, 6, 6);
+  const catMuzzleGeo = new THREE.SphereGeometry(0.09, LOW ? 6 : 8, LOW ? 6 : 8);
+  const catMouthGeo = new THREE.BoxGeometry(0.07, 0.012, 0.02);
+  const catWhiskerGeo = new THREE.BoxGeometry(0.14, 0.008, 0.008);
   const catCheekGeo = new THREE.SphereGeometry(0.06, 6, 6);
   const catPatchGeo = new THREE.SphereGeometry(0.08, 6, 6);
   const catStripeGeo = new THREE.BoxGeometry(0.12, 0.04, 0.06);
-  const catLegGeo = new THREE.CapsuleGeometry(0.035, 0.08, 3, LOW ? 5 : 6);
+  const catLegGeo = new THREE.CapsuleGeometry(0.038, 0.1, 3, LOW ? 5 : 6);
+  const catPawGeo = new THREE.SphereGeometry(0.04, LOW ? 5 : 6, LOW ? 5 : 6);
 
   function makeAvatar(agent) {
     const g = new THREE.Group();
@@ -701,13 +708,13 @@
     body.scale.set(breed.bodyScale[0], breed.bodyScale[1], breed.bodyScale[2]);
     body.castShadow = !LOW;
     g.add(body);
-    // belly patch
+    // belly / chest fluff (lighter, more visible)
     const belly = new THREE.Mesh(catBodyGeo, bellyMat);
-    belly.position.set(0, 0.28 + y0, 0.12);
+    belly.position.set(0, 0.26 + y0, 0.16);
     belly.scale.set(
-      0.72 * breed.bodyScale[0],
-      0.65 * breed.bodyScale[1],
-      0.55 * breed.bodyScale[2]
+      0.78 * breed.bodyScale[0],
+      0.72 * breed.bodyScale[1],
+      0.68 * breed.bodyScale[2]
     );
     g.add(belly);
     // head (Persian: flatter / closer; Siamese: higher)
@@ -717,7 +724,18 @@
     head.castShadow = !LOW;
     g.add(head);
 
-    // ears
+    // muzzle / snout (Persian flatter; others push forward)
+    const muzzleZ = 0.14 * breed.headScale[2] + (breed.id === 'persian' ? 0.04 : 0.1);
+    const muzzle = new THREE.Mesh(catMuzzleGeo, bellyMat);
+    muzzle.position.set(0, breed.headY - 0.05 + y0, muzzleZ);
+    muzzle.scale.set(
+      breed.id === 'persian' ? 0.95 : 0.85,
+      breed.id === 'persian' ? 0.7 : 0.65,
+      breed.id === 'persian' ? 0.55 : 0.85
+    );
+    g.add(muzzle);
+
+    // ears — pink inner always on top of outer
     const earY = breed.headY + 0.16 * breed.headScale[1] + y0;
     const earX = 0.12 * breed.headScale[0];
     [[-earX, earY, 0], [earX, earY, 0]].forEach(([x, y, z], i) => {
@@ -737,14 +755,16 @@
       ear.scale.set(es, es, es);
       g.add(ear);
       const inner = new THREE.Mesh(catEarInnerGeo, earMat);
-      inner.position.set(x, y - 0.01, breed.earFold ? 0.05 : 0.02);
+      // slightly forward so pink reads clearly over outer ear
+      inner.position.set(x, y - 0.01, breed.earFold ? 0.06 : 0.035);
       if (breed.earFold) {
         inner.rotation.x = 1.15;
         inner.rotation.z = i === 0 ? 0.55 : -0.55;
       } else {
         inner.rotation.z = i === 0 ? 0.35 : -0.35;
+        inner.rotation.x = -0.15;
       }
-      inner.scale.set(es, es, es);
+      inner.scale.set(es * 0.95, es * 0.95, es * 0.95);
       g.add(inner);
       // Maine Coon lynx tufts
       if (breed.earTufts) {
@@ -756,18 +776,46 @@
       }
     });
 
-    // eyes (breed color)
-    const eyeY = breed.headY + 0.02 + y0;
-    const eyeZ = 0.16 * breed.headScale[2] + 0.06;
-    [[-0.08 * breed.headScale[0], eyeY, eyeZ], [0.08 * breed.headScale[0], eyeY, eyeZ]].forEach(([x, y, z]) => {
+    // eyes + tiny white highlight
+    const eyeHlMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    const eyeY = breed.headY + 0.03 + y0;
+    const eyeZ = 0.17 * breed.headScale[2] + 0.07;
+    [[-0.085 * breed.headScale[0], eyeY, eyeZ], [0.085 * breed.headScale[0], eyeY, eyeZ]].forEach(([x, y, z]) => {
       const eye = new THREE.Mesh(catEyeGeo, eyeMat);
       eye.position.set(x, y, z);
       g.add(eye);
+      const hl = new THREE.Mesh(catEyeHlGeo, eyeHlMat);
+      hl.position.set(x - 0.01, y + 0.012, z + 0.028);
+      g.add(hl);
     });
-    // nose
+
+    // nose (pinker read) + short mouth line
     const nose = new THREE.Mesh(catNoseGeo, noseMat);
-    nose.position.set(0, breed.headY - 0.04 + y0, 0.18 * breed.headScale[2] + 0.06);
+    const noseZ = muzzleZ + (breed.id === 'persian' ? 0.04 : 0.055);
+    nose.position.set(0, breed.headY - 0.055 + y0, noseZ);
+    nose.scale.set(1.1, 0.85, 1.0);
     g.add(nose);
+    const mouth = new THREE.Mesh(catMouthGeo, noseMat);
+    mouth.position.set(0, breed.headY - 0.085 + y0, noseZ + 0.01);
+    g.add(mouth);
+
+    // whiskers (2–3 per side; fewer on LOW)
+    if (!breed.hairless) {
+      const whiskerMat = new THREE.MeshBasicMaterial({ color: 0xe2e8f0 });
+      const wCount = LOW ? 2 : 3;
+      const wBaseY = breed.headY - 0.05 + y0;
+      const wBaseZ = muzzleZ + 0.02;
+      for (let side = -1; side <= 1; side += 2) {
+        for (let wi = 0; wi < wCount; wi++) {
+          const w = new THREE.Mesh(catWhiskerGeo, whiskerMat);
+          const ang = (wi - (wCount - 1) / 2) * 0.28;
+          w.position.set(side * 0.06, wBaseY + ang * 0.04, wBaseZ);
+          w.rotation.z = side * (0.12 + wi * 0.08);
+          w.rotation.y = side * 0.35;
+          g.add(w);
+        }
+      }
+    }
 
     // cheeks (Persian / BSH / Fold / Ragdoll / Maine Coon)
     if (breed.cheeks) {
@@ -811,12 +859,17 @@
       g.add(hp);
     }
 
-    // Colorpoint legs (Siamese / Ragdoll)
-    if (breed.colorpoint && pointMat) {
+    // Always 4 short legs (colorpoint uses point color; else fur)
+    {
+      const legMat = (breed.colorpoint && pointMat) ? pointMat : furMat;
       [[-0.12, 0.12], [0.12, 0.12], [-0.1, -0.08], [0.1, -0.08]].forEach(([x, z]) => {
-        const leg = new THREE.Mesh(catLegGeo, pointMat);
-        leg.position.set(x * breed.bodyScale[0], 0.1 + y0, z);
+        const leg = new THREE.Mesh(catLegGeo, legMat);
+        leg.position.set(x * breed.bodyScale[0], 0.09 + y0, z * breed.bodyScale[2]);
         g.add(leg);
+        const paw = new THREE.Mesh(catPawGeo, bellyMat);
+        paw.position.set(x * breed.bodyScale[0], 0.035 + y0, z * breed.bodyScale[2]);
+        paw.scale.set(1.05, 0.7, 1.1);
+        g.add(paw);
       });
     }
 
@@ -988,7 +1041,7 @@
     const dy = e.clientY - lastY;
     lastX = e.clientX; lastY = e.clientY;
     theta -= dx * 0.005;
-    phi = Math.max(0.35, Math.min(1.35, phi - dy * 0.005));
+    phi = Math.max(0.75, Math.min(1.35, phi - dy * 0.005));
     syncCamFromSpherical();
   });
   const FRUSTUM_MIN = 14, FRUSTUM_MAX = 48;
