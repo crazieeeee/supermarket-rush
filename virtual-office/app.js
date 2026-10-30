@@ -52,12 +52,123 @@
     return s.length > 48 ? s.slice(0, 48) + '…' : s;
   }
 
+  function hashStr(s) {
+    let h = 2166136261 >>> 0;
+    for (let i = 0; i < String(s).length; i++) {
+      h ^= String(s).charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return h >>> 0;
+  }
+
+  // Research-backed low-poly breed traits (CFA/TICA-style silhouettes)
+  const BREEDS = [
+    {
+      id: 'persian', name: 'Persian', nameZh: '波斯貓',
+      fur: 0xf5d0a9, belly: 0xfff6eb, earInner: 0xf9a8d4,
+      eye: 0x60a5fa, nose: 0xf9a8d4,
+      bodyScale: [1.25, 1.05, 1.2], headScale: [1.2, 1.1, 0.78], headY: 0.54,
+      earScale: 0.65, earFold: false, earTufts: false, largeEars: false,
+      tailLen: 1, bushyTail: false, cheeks: true, posture: 0,
+      colorpoint: false, hairless: false, stripes: false, patches: null,
+    },
+    {
+      id: 'siamese', name: 'Siamese', nameZh: '暹羅貓',
+      fur: 0xf5e6c8, belly: 0xfffaf0, earInner: 0x78350f, point: 0x5c4033,
+      eye: 0x60a5fa, nose: 0x9a3412,
+      bodyScale: [0.85, 1.15, 0.9], headScale: [0.9, 1.05, 1.1], headY: 0.68,
+      earScale: 1.15, earFold: false, earTufts: false, largeEars: true,
+      tailLen: 1.15, bushyTail: false, cheeks: false, posture: 0,
+      colorpoint: true, hairless: false, stripes: false, patches: null,
+    },
+    {
+      id: 'maine-coon', name: 'Maine Coon', nameZh: '緬因貓',
+      fur: 0xb45309, belly: 0xfde68a, earInner: 0xf9a8d4,
+      eye: 0x84cc16, nose: 0xf472b6,
+      bodyScale: [1.35, 1.2, 1.3], headScale: [1.15, 1.05, 1.05], headY: 0.7,
+      earScale: 1.05, earFold: false, earTufts: true, largeEars: false,
+      tailLen: 1.45, bushyTail: true, cheeks: true, posture: 0,
+      colorpoint: false, hairless: false, stripes: false, patches: null,
+    },
+    {
+      id: 'british-shorthair', name: 'British Shorthair', nameZh: '英短',
+      fur: 0x94a3b8, belly: 0xe2e8f0, earInner: 0xf9a8d4,
+      eye: 0xf59e0b, nose: 0xf472b6,
+      bodyScale: [1.2, 1.0, 1.15], headScale: [1.25, 1.15, 1.1], headY: 0.6,
+      earScale: 0.75, earFold: false, earTufts: false, largeEars: false,
+      tailLen: 0.9, bushyTail: false, cheeks: true, posture: 0,
+      colorpoint: false, hairless: false, stripes: false, patches: null,
+    },
+    {
+      id: 'scottish-fold', name: 'Scottish Fold', nameZh: '蘇格蘭摺耳',
+      fur: 0xe7e5e4, belly: 0xfafaf9, earInner: 0xfbcfe8,
+      eye: 0x84cc16, nose: 0xf9a8d4,
+      bodyScale: [1.1, 0.95, 1.05], headScale: [1.2, 1.15, 1.05], headY: 0.58,
+      earScale: 0.85, earFold: true, earTufts: false, largeEars: false,
+      tailLen: 0.95, bushyTail: false, cheeks: true, posture: 0,
+      colorpoint: false, hairless: false, stripes: false, patches: null,
+    },
+    {
+      id: 'sphynx', name: 'Sphynx', nameZh: '無毛貓',
+      fur: 0xe8b4a0, belly: 0xf5d0c5, earInner: 0xd4a574,
+      eye: 0x67e8f9, nose: 0xe11d48,
+      bodyScale: [0.88, 1.05, 0.92], headScale: [0.95, 1.0, 1.05], headY: 0.64,
+      earScale: 1.35, earFold: false, earTufts: false, largeEars: true,
+      tailLen: 1.05, bushyTail: false, cheeks: false, posture: 0,
+      colorpoint: false, hairless: true, stripes: false, patches: null,
+    },
+    {
+      id: 'russian-blue', name: 'Russian Blue', nameZh: '俄羅斯藍貓',
+      fur: 0x64748b, belly: 0x94a3b8, earInner: 0x475569,
+      eye: 0x22c55e, nose: 0x475569,
+      bodyScale: [0.95, 1.05, 1.0], headScale: [0.95, 1.0, 1.0], headY: 0.64,
+      earScale: 0.95, earFold: false, earTufts: false, largeEars: false,
+      tailLen: 1.05, bushyTail: false, cheeks: false, posture: 0,
+      colorpoint: false, hairless: false, stripes: false, patches: null,
+    },
+    {
+      id: 'orange-tabby', name: 'Orange Tabby', nameZh: '橘貓',
+      fur: 0xf97316, belly: 0xfed7aa, earInner: 0xfb7185,
+      eye: 0x84cc16, nose: 0xf472b6,
+      bodyScale: [1.05, 0.95, 1.0], headScale: [1.05, 1.0, 1.0], headY: 0.62,
+      earScale: 1.0, earFold: false, earTufts: false, largeEars: false,
+      tailLen: 1.0, bushyTail: false, cheeks: false, posture: 0,
+      colorpoint: false, hairless: false, stripes: true, patches: null,
+    },
+    {
+      id: 'calico', name: 'Calico', nameZh: '三花貓',
+      fur: 0xfafaf9, belly: 0xffffff, earInner: 0xf9a8d4,
+      eye: 0x84cc16, nose: 0xf472b6,
+      bodyScale: [1.05, 0.95, 1.0], headScale: [1.05, 1.0, 1.0], headY: 0.62,
+      earScale: 1.0, earFold: false, earTufts: false, largeEars: false,
+      tailLen: 1.0, bushyTail: false, cheeks: false, posture: 0,
+      colorpoint: false, hairless: false, stripes: false,
+      patches: [0xf97316, 0x1f2937],
+    },
+    {
+      id: 'ragdoll', name: 'Ragdoll', nameZh: '布偶貓',
+      fur: 0xf5e6c8, belly: 0xfffaf0, earInner: 0x78350f, point: 0x6b4423,
+      eye: 0x60a5fa, nose: 0xf9a8d4,
+      bodyScale: [1.3, 1.1, 1.25], headScale: [1.1, 1.05, 1.0], headY: 0.62,
+      earScale: 0.9, earFold: false, earTufts: false, largeEars: false,
+      tailLen: 1.15, bushyTail: true, cheeks: true, posture: -0.04,
+      colorpoint: true, hairless: false, stripes: false, patches: null,
+    },
+  ];
+
+  function pickBreed(id, name) {
+    const h = hashStr(id || name || '');
+    return BREEDS[h % BREEDS.length];
+  }
+
   // ——— agents ———
   const agents = SNAP.agents.map((a) => {
     const room = classifyRoom(a.name);
+    const breed = pickBreed(a.id, a.name);
     return {
       ...a,
       room,
+      breed,
       hue: hashHue(a.id),
       color: new THREE.Color().setHSL(hashHue(a.id) / 360, 0.65, 0.55),
     };
@@ -91,12 +202,14 @@
     list.forEach((a) => {
       const row = document.createElement('div');
       row.className = 'agent-row' + (selectedId === a.id ? ' selected' : '');
+      const breedLabel = a.breed ? (a.breed.nameZh || a.breed.name) : '';
       row.innerHTML =
         '<i class="dot ' + cssDot(a.activity, a.status) + '"></i>' +
         '<div class="meta">' +
         '<div class="name">' + escapeHtml(a.name) + '</div>' +
         '<div class="sub">' + escapeHtml(a.activity || a.status) +
         (a.detail ? ' · ' + escapeHtml(a.detail) : '') + '</div>' +
+        (breedLabel ? '<span class="breed-tag">' + escapeHtml(breedLabel) + '</span>' : '') +
         '<span class="room-tag">' + ROOM_META[a.room].label + '</span>' +
         '</div>';
       row.addEventListener('click', () => {
@@ -135,8 +248,9 @@
 
   // ——— Three.js ———
   const canvas = document.getElementById('c');
-  // Low power: phones / coarse pointer / Save-Data / few cores — keep look, cut GPU cost
-  const LOW = (() => {
+  // Quality: high = prior desktop path; low = reduced GPU; auto = capability detect
+  const QUALITY_KEY = 'vo-quality';
+  function detectLowCapability() {
     try {
       if (window.matchMedia('(max-width: 720px)').matches) return true;
       if (window.matchMedia('(pointer: coarse)').matches) return true;
@@ -145,6 +259,33 @@
           && navigator.hardwareConcurrency <= 4) return true;
     } catch (_) {}
     return false;
+  }
+  function readQualityPref() {
+    try {
+      const v = localStorage.getItem(QUALITY_KEY);
+      if (v === 'high' || v === 'low' || v === 'auto') return v;
+    } catch (_) {}
+    return 'auto';
+  }
+  const qualityPref = readQualityPref();
+  const LOW = qualityPref === 'high' ? false
+    : qualityPref === 'low' ? true
+    : detectLowCapability();
+  // Mark active quality button
+  (function syncQualityUI() {
+    const root = document.getElementById('quality');
+    if (!root) return;
+    root.querySelectorAll('button[data-quality]').forEach((b) => {
+      b.classList.toggle('active', b.dataset.quality === qualityPref);
+    });
+    root.addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-quality]');
+      if (!btn) return;
+      const next = btn.dataset.quality;
+      if (next !== 'high' && next !== 'low' && next !== 'auto') return;
+      try { localStorage.setItem(QUALITY_KEY, next); } catch (_) {}
+      location.reload();
+    });
   })();
   const renderer = new THREE.WebGLRenderer({
     canvas,
@@ -521,162 +662,224 @@
   const catHeadGeo = new THREE.SphereGeometry(0.22, _catSeg, _catSeg);
   const catEarGeo = new THREE.ConeGeometry(0.09, 0.16, LOW ? 5 : 6);
   const catEarInnerGeo = new THREE.ConeGeometry(0.05, 0.1, LOW ? 4 : 5);
+  const catTuftGeo = new THREE.ConeGeometry(0.035, 0.1, 4);
   const catTailGeo = new THREE.CapsuleGeometry(0.045, 0.28, 4, LOW ? 6 : 8);
   const catEyeGeo = new THREE.SphereGeometry(0.035, 6, 6);
   const catNoseGeo = new THREE.SphereGeometry(0.028, 6, 6);
   const catCheekGeo = new THREE.SphereGeometry(0.06, 6, 6);
-  const catBowGeo = new THREE.SphereGeometry(0.05, 6, 6);
-  const catMuffGeo = new THREE.TorusGeometry(0.12, 0.035, 6, LOW ? 10 : 14);
-
-  const CAT_PALETTES = [
-    { fur: 0xf5d0a9, belly: 0xfff6eb, ear: 0xf9a8d4, accent: 0xf472b6 }, // cream peach
-    { fur: 0xf97316, belly: 0xfed7aa, ear: 0xfb7185, accent: 0xea580c }, // orange tabby
-    { fur: 0x1f2937, belly: 0xe5e7eb, ear: 0xf9a8d4, accent: 0x38bdf8 }, // tuxedo
-    { fur: 0xd6d3d1, belly: 0xfafaf9, ear: 0xfbcfe8, accent: 0xa78bfa }, // silver
-    { fur: 0x78350f, belly: 0xfde68a, ear: 0xf9a8d4, accent: 0xfbbf24 }, // chocolate
-    { fur: 0xfce7f3, belly: 0xffffff, ear: 0xfb7185, accent: 0xec4899 }, // pinkish
-    { fur: 0x86efac, belly: 0xecfdf5, ear: 0xf9a8d4, accent: 0x22c55e }, // mint
-    { fur: 0x93c5fd, belly: 0xeff6ff, ear: 0xf9a8d4, accent: 0x3b82f6 }, // sky
-    { fur: 0xc4b5fd, belly: 0xf5f3ff, ear: 0xf9a8d4, accent: 0x8b5cf6 }, // lavender
-    { fur: 0xfca5a5, belly: 0xfef2f2, ear: 0xfb7185, accent: 0xef4444 }, // rosy
-    { fur: 0xfde047, belly: 0xfefce8, ear: 0xf9a8d4, accent: 0xeab308 }, // butter
-    { fur: 0x2dd4bf, belly: 0xccfbf1, ear: 0xf9a8d4, accent: 0x14b8a6 }, // teal
-  ];
-
-  function hashStr(s) {
-    let h = 2166136261 >>> 0;
-    for (let i = 0; i < s.length; i++) {
-      h ^= s.charCodeAt(i);
-      h = Math.imul(h, 16777619);
-    }
-    return h >>> 0;
-  }
+  const catPatchGeo = new THREE.SphereGeometry(0.08, 6, 6);
+  const catStripeGeo = new THREE.BoxGeometry(0.12, 0.04, 0.06);
+  const catLegGeo = new THREE.CapsuleGeometry(0.035, 0.08, 3, LOW ? 5 : 6);
 
   function makeAvatar(agent) {
     const g = new THREE.Group();
-    const key = agent.id || agent.name || '';
-    const h = hashStr(key);
-    const pal = CAT_PALETTES[h % CAT_PALETTES.length];
-    const style = h % 4; // 0 plain, 1 bow, 2 scarf, 3 cheek fluff
+    const breed = agent.breed || BREEDS[0];
+    const furRough = breed.hairless ? 0.95 : 0.75;
+    const furMetal = breed.hairless ? 0.15 : 0.05;
+    const furEmissive = breed.hairless ? 0.02 : 0.08;
     const furMat = new THREE.MeshStandardMaterial({
-      color: pal.fur, roughness: 0.75, metalness: 0.05,
-      emissive: pal.fur, emissiveIntensity: 0.08,
+      color: breed.fur, roughness: furRough, metalness: furMetal,
+      emissive: breed.fur, emissiveIntensity: furEmissive,
     });
     const bellyMat = new THREE.MeshStandardMaterial({
-      color: pal.belly, roughness: 0.85, metalness: 0.0,
+      color: breed.belly, roughness: 0.85, metalness: 0.0,
     });
-    const earMat = new THREE.MeshStandardMaterial({ color: pal.ear, roughness: 0.7 });
-    const eyeMat = new THREE.MeshBasicMaterial({ color: 0x111827 });
-    const noseMat = new THREE.MeshBasicMaterial({ color: 0xf472b6 });
-    const accentMat = new THREE.MeshStandardMaterial({
-      color: pal.accent, roughness: 0.55, emissive: pal.accent, emissiveIntensity: 0.25,
-    });
+    const earMat = new THREE.MeshStandardMaterial({ color: breed.earInner, roughness: 0.7 });
+    const eyeMat = new THREE.MeshBasicMaterial({ color: breed.eye });
+    const noseMat = new THREE.MeshBasicMaterial({ color: breed.nose });
+    const pointMat = breed.colorpoint
+      ? new THREE.MeshStandardMaterial({
+          color: breed.point || 0x5c4033, roughness: 0.7, metalness: 0.05,
+        })
+      : null;
+
+    const y0 = breed.posture || 0;
 
     // body
     const body = new THREE.Mesh(catBodyGeo, furMat);
-    body.position.y = 0.32;
-    body.scale.set(1.05, 0.9, 0.95);
+    body.position.y = 0.32 + y0;
+    body.scale.set(breed.bodyScale[0], breed.bodyScale[1], breed.bodyScale[2]);
     body.castShadow = !LOW;
     g.add(body);
     // belly patch
     const belly = new THREE.Mesh(catBodyGeo, bellyMat);
-    belly.position.set(0, 0.28, 0.12);
-    belly.scale.set(0.72, 0.65, 0.55);
+    belly.position.set(0, 0.28 + y0, 0.12);
+    belly.scale.set(
+      0.72 * breed.bodyScale[0],
+      0.65 * breed.bodyScale[1],
+      0.55 * breed.bodyScale[2]
+    );
     g.add(belly);
-    // head
+    // head (Persian: flatter / closer; Siamese: higher)
     const head = new THREE.Mesh(catHeadGeo, furMat);
-    head.position.y = 0.62;
+    head.position.y = breed.headY + y0;
+    head.scale.set(breed.headScale[0], breed.headScale[1], breed.headScale[2]);
     head.castShadow = !LOW;
     g.add(head);
+
     // ears
-    [[-0.12, 0.78, 0], [0.12, 0.78, 0]].forEach(([x, y, z], i) => {
-      const ear = new THREE.Mesh(catEarGeo, furMat);
+    const earY = breed.headY + 0.16 * breed.headScale[1] + y0;
+    const earX = 0.12 * breed.headScale[0];
+    [[-earX, earY, 0], [earX, earY, 0]].forEach(([x, y, z], i) => {
+      const ear = new THREE.Mesh(catEarGeo, pointMat || furMat);
       ear.position.set(x, y, z);
-      ear.rotation.z = i === 0 ? 0.35 : -0.35;
-      ear.rotation.x = -0.15;
+      if (breed.earFold) {
+        // Scottish Fold: ears tip forward/down
+        ear.rotation.x = 1.15;
+        ear.rotation.z = i === 0 ? 0.55 : -0.55;
+        ear.position.y -= 0.04;
+        ear.position.z += 0.06;
+      } else {
+        ear.rotation.z = i === 0 ? 0.35 : -0.35;
+        ear.rotation.x = -0.15;
+      }
+      const es = breed.earScale * (breed.largeEars ? 1.15 : 1);
+      ear.scale.set(es, es, es);
       g.add(ear);
       const inner = new THREE.Mesh(catEarInnerGeo, earMat);
-      inner.position.set(x, y - 0.01, 0.02);
-      inner.rotation.z = i === 0 ? 0.35 : -0.35;
+      inner.position.set(x, y - 0.01, breed.earFold ? 0.05 : 0.02);
+      if (breed.earFold) {
+        inner.rotation.x = 1.15;
+        inner.rotation.z = i === 0 ? 0.55 : -0.55;
+      } else {
+        inner.rotation.z = i === 0 ? 0.35 : -0.35;
+      }
+      inner.scale.set(es, es, es);
       g.add(inner);
+      // Maine Coon lynx tufts
+      if (breed.earTufts) {
+        const tuft = new THREE.Mesh(catTuftGeo, furMat);
+        tuft.position.set(x * 1.05, y + 0.1 * es, z);
+        tuft.rotation.z = i === 0 ? 0.2 : -0.2;
+        tuft.scale.set(0.7, 1.1, 0.7);
+        g.add(tuft);
+      }
     });
-    // eyes
-    [[-0.08, 0.64, 0.18], [0.08, 0.64, 0.18]].forEach(([x, y, z]) => {
+
+    // eyes (breed color)
+    const eyeY = breed.headY + 0.02 + y0;
+    const eyeZ = 0.16 * breed.headScale[2] + 0.06;
+    [[-0.08 * breed.headScale[0], eyeY, eyeZ], [0.08 * breed.headScale[0], eyeY, eyeZ]].forEach(([x, y, z]) => {
       const eye = new THREE.Mesh(catEyeGeo, eyeMat);
       eye.position.set(x, y, z);
       g.add(eye);
     });
     // nose
     const nose = new THREE.Mesh(catNoseGeo, noseMat);
-    nose.position.set(0, 0.58, 0.2);
+    nose.position.set(0, breed.headY - 0.04 + y0, 0.18 * breed.headScale[2] + 0.06);
     g.add(nose);
-    // cheeks
-    if (style === 3 || style === 1) {
-      [[-0.16, 0.56, 0.12], [0.16, 0.56, 0.12]].forEach(([x, y, z]) => {
+
+    // cheeks (Persian / BSH / Fold / Ragdoll / Maine Coon)
+    if (breed.cheeks) {
+      [[-0.16 * breed.headScale[0], breed.headY - 0.06 + y0, 0.1],
+       [0.16 * breed.headScale[0], breed.headY - 0.06 + y0, 0.1]].forEach(([x, y, z]) => {
         const cheek = new THREE.Mesh(catCheekGeo, bellyMat);
         cheek.position.set(x, y, z);
+        cheek.scale.set(1.15, 1.1, 1.0);
         g.add(cheek);
       });
     }
-    // accessories for variety
-    if (style === 1) {
-      const bowL = new THREE.Mesh(catBowGeo, accentMat);
-      bowL.position.set(-0.06, 0.74, 0.12);
-      const bowR = new THREE.Mesh(catBowGeo, accentMat);
-      bowR.position.set(0.06, 0.74, 0.12);
-      g.add(bowL, bowR);
-    } else if (style === 2) {
-      const muff = new THREE.Mesh(catMuffGeo, accentMat);
-      muff.position.set(0, 0.48, 0.02);
-      muff.rotation.x = Math.PI / 2;
-      g.add(muff);
+
+    // Orange tabby stripes
+    if (breed.stripes) {
+      const stripeMat = new THREE.MeshStandardMaterial({
+        color: 0xea580c, roughness: 0.7, metalness: 0.05,
+      });
+      [[-0.08, 0.42], [0.08, 0.48], [0, 0.36]].forEach(([x, y], i) => {
+        const s = new THREE.Mesh(catStripeGeo, stripeMat);
+        s.position.set(x, y + y0, 0.22);
+        s.rotation.y = i * 0.2;
+        g.add(s);
+      });
     }
-    // tail (cute curl)
-    const tail = new THREE.Mesh(catTailGeo, furMat);
-    tail.position.set(0.22, 0.28, -0.22);
+
+    // Calico patches
+    if (breed.patches && breed.patches.length) {
+      breed.patches.forEach((col, i) => {
+        const pm = new THREE.MeshStandardMaterial({ color: col, roughness: 0.75 });
+        const p = new THREE.Mesh(catPatchGeo, pm);
+        p.position.set(i === 0 ? -0.16 : 0.14, 0.38 + y0 + i * 0.04, 0.18);
+        p.scale.set(1.1, 0.9, 0.7);
+        g.add(p);
+      });
+      // small head patch
+      const hp = new THREE.Mesh(catPatchGeo, new THREE.MeshStandardMaterial({
+        color: breed.patches[0], roughness: 0.75,
+      }));
+      hp.position.set(-0.1, breed.headY + 0.04 + y0, 0.12);
+      hp.scale.set(0.7, 0.55, 0.5);
+      g.add(hp);
+    }
+
+    // Colorpoint legs (Siamese / Ragdoll)
+    if (breed.colorpoint && pointMat) {
+      [[-0.12, 0.12], [0.12, 0.12], [-0.1, -0.08], [0.1, -0.08]].forEach(([x, z]) => {
+        const leg = new THREE.Mesh(catLegGeo, pointMat);
+        leg.position.set(x * breed.bodyScale[0], 0.1 + y0, z);
+        g.add(leg);
+      });
+    }
+
+    // tail
+    const tail = new THREE.Mesh(catTailGeo, pointMat || furMat);
+    const tScale = breed.bushyTail ? 1.35 : 1.0;
+    tail.scale.set(tScale, breed.tailLen, tScale);
+    tail.position.set(0.22 * breed.bodyScale[0], 0.28 + y0, -0.22 * breed.bodyScale[2]);
     tail.rotation.z = 0.9;
     tail.rotation.x = 0.4;
     g.add(tail);
 
     // status ring under paws
+    const ringR = 0.34 * Math.max(breed.bodyScale[0], breed.bodyScale[2]);
     const ring = new THREE.Mesh(
-      new THREE.TorusGeometry(0.34, 0.03, 8, LOW ? 16 : 24),
+      new THREE.TorusGeometry(ringR, 0.03, 8, LOW ? 16 : 24),
       new THREE.MeshBasicMaterial({ color: activityColor(agent.activity, agent.status) })
     );
     ring.rotation.x = Math.PI / 2;
     ring.position.y = 0.04;
     g.add(ring);
-    // label
-    const label = makeNameLabel(agent.name, ROOM_META[agent.room].accent);
-    label.position.y = 1.15;
+
+    // label: name + breed
+    const label = makeNameLabel(
+      agent.name,
+      ROOM_META[agent.room].accent,
+      breed.nameZh || breed.name
+    );
+    label.position.y = Math.max(1.15, breed.headY + 0.55 + y0);
     g.add(label);
 
     g.userData.agent = agent;
     g.userData.ring = ring;
     g.userData.body = body;
     g.userData.tail = tail;
-    g.userData.palette = pal;
+    g.userData.breed = breed;
     return g;
   }
 
-  function makeNameLabel(name, color) {
+  function makeNameLabel(name, color, breedName) {
     const c = document.createElement('canvas');
-    c.width = 256; c.height = 64;
+    c.width = 256; c.height = breedName ? 80 : 64;
     const ctx = c.getContext('2d');
-    ctx.clearRect(0, 0, 256, 64);
+    ctx.clearRect(0, 0, c.width, c.height);
     ctx.fillStyle = 'rgba(8,12,24,0.8)';
-    roundRect(ctx, 8, 12, 240, 40, 10);
+    roundRect(ctx, 8, breedName ? 8 : 12, 240, breedName ? 64 : 40, 10);
     ctx.fill();
-    ctx.font = 'bold 22px sans-serif';
-    ctx.fillStyle = color || '#e8ecf7';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     const display = name.length > 10 ? name.slice(0, 10) + '…' : name;
-    ctx.fillText(display, 128, 34);
+    ctx.font = 'bold 20px sans-serif';
+    ctx.fillStyle = color || '#e8ecf7';
+    ctx.fillText(display, 128, breedName ? 30 : 34);
+    if (breedName) {
+      ctx.font = '12px sans-serif';
+      ctx.fillStyle = '#fcd34d';
+      const b = breedName.length > 14 ? breedName.slice(0, 14) + '…' : breedName;
+      ctx.fillText(b, 128, 54);
+    }
     const tex = new THREE.CanvasTexture(c);
     const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false });
     const spr = new THREE.Sprite(mat);
-    spr.scale.set(1.8, 0.45, 1);
+    spr.scale.set(1.9, breedName ? 0.6 : 0.45, 1);
     return spr;
   }
 
@@ -735,6 +938,8 @@
   }
 
   // ——— Orbit / zoom (simple) ———
+  const pointerState = { count: 0, map: new Map() };
+
   let dragging = false;
   let lastX = 0, lastY = 0;
   let theta = Math.PI / 4;
@@ -753,11 +958,31 @@
   syncCamFromSpherical();
 
   canvas.addEventListener('pointerdown', (e) => {
-    dragging = true; lastX = e.clientX; lastY = e.clientY;
-    canvas.setPointerCapture(e.pointerId);
+    pointerState.map.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    pointerState.count = pointerState.map.size;
+    if (pointerState.count >= 2) {
+      dragging = false;
+    } else {
+      dragging = true; lastX = e.clientX; lastY = e.clientY;
+    }
+    try { canvas.setPointerCapture(e.pointerId); } catch (_) {}
   });
-  canvas.addEventListener('pointerup', () => { dragging = false; });
+  function endPointer(e) {
+    pointerState.map.delete(e.pointerId);
+    pointerState.count = pointerState.map.size;
+    if (pointerState.count < 1) dragging = false;
+  }
+  canvas.addEventListener('pointerup', endPointer);
+  canvas.addEventListener('pointercancel', endPointer);
   canvas.addEventListener('pointermove', (e) => {
+    if (pointerState.map.has(e.pointerId)) {
+      pointerState.map.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    }
+    // Pinch handled below when 2 pointers
+    if (pointerState.count >= 2) {
+      dragging = false;
+      return;
+    }
     if (!dragging) return;
     const dx = e.clientX - lastX;
     const dy = e.clientY - lastY;
@@ -766,13 +991,65 @@
     phi = Math.max(0.35, Math.min(1.35, phi - dy * 0.005));
     syncCamFromSpherical();
   });
-  canvas.addEventListener('wheel', (e) => {
-    e.preventDefault();
-    frustumSize = Math.max(14, Math.min(48, frustumSize + e.deltaY * 0.02));
-    radius = Math.max(28, Math.min(70, radius + e.deltaY * 0.03));
+  const FRUSTUM_MIN = 14, FRUSTUM_MAX = 48;
+  const RADIUS_MIN = 28, RADIUS_MAX = 70;
+  const FRUSTUM_DEFAULT = 28, RADIUS_DEFAULT = 48;
+
+  function applyZoomDelta(dFrustum, dRadius) {
+    frustumSize = Math.max(FRUSTUM_MIN, Math.min(FRUSTUM_MAX, frustumSize + dFrustum));
+    radius = Math.max(RADIUS_MIN, Math.min(RADIUS_MAX, radius + dRadius));
     updateCamera();
     syncCamFromSpherical();
+  }
+  function zoomInStep() { applyZoomDelta(-2.5, -4); }
+  function zoomOutStep() { applyZoomDelta(2.5, 4); }
+  function zoomFit() {
+    frustumSize = FRUSTUM_DEFAULT;
+    radius = RADIUS_DEFAULT;
+    updateCamera();
+    syncCamFromSpherical();
+  }
+
+  canvas.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    applyZoomDelta(e.deltaY * 0.02, e.deltaY * 0.03);
   }, { passive: false });
+
+  const zoomInBtn = document.getElementById('zoomIn');
+  const zoomOutBtn = document.getElementById('zoomOut');
+  const zoomFitBtn = document.getElementById('zoomFit');
+  if (zoomInBtn) zoomInBtn.addEventListener('click', (e) => { e.stopPropagation(); zoomInStep(); });
+  if (zoomOutBtn) zoomOutBtn.addEventListener('click', (e) => { e.stopPropagation(); zoomOutStep(); });
+  if (zoomFitBtn) zoomFitBtn.addEventListener('click', (e) => { e.stopPropagation(); zoomFit(); });
+
+  // Pinch-zoom (two pointers) — shares pointerState with orbit
+  let pinchStartDist = 0;
+  let pinchStartFrustum = FRUSTUM_DEFAULT;
+  let pinchStartRadius = RADIUS_DEFAULT;
+  let pinching = false;
+  canvas.addEventListener('pointerdown', () => {
+    if (pointerState.count === 2) {
+      dragging = false;
+      pinching = true;
+      const pts = Array.from(pointerState.map.values());
+      pinchStartDist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y) || 1;
+      pinchStartFrustum = frustumSize;
+      pinchStartRadius = radius;
+    }
+  });
+  canvas.addEventListener('pointerup', () => {
+    if (pointerState.count < 2) pinching = false;
+  });
+  canvas.addEventListener('pointermove', () => {
+    if (!pinching || pointerState.count !== 2) return;
+    const pts = Array.from(pointerState.map.values());
+    const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y) || 1;
+    const ratio = pinchStartDist / dist; // pinch in → zoom out (larger frustum)
+    frustumSize = Math.max(FRUSTUM_MIN, Math.min(FRUSTUM_MAX, pinchStartFrustum * ratio));
+    radius = Math.max(RADIUS_MIN, Math.min(RADIUS_MAX, pinchStartRadius * ratio));
+    updateCamera();
+    syncCamFromSpherical();
+  });
 
   // ——— Time of day ———
   const TOD = {

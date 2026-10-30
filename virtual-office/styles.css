@@ -72,12 +72,12 @@ html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
   letter-spacing: 0.08em; color: var(--muted); font-weight: 600;
 }
 .room-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
-.room-tabs button, .tod button {
+.room-tabs button, .tod button, .quality button, .zoom-ctrl button {
   background: rgba(255,255,255,0.04); border: 1px solid var(--border);
   color: var(--muted); border-radius: 999px; padding: 4px 10px; font-size: 11px;
   cursor: pointer; -webkit-tap-highlight-color: transparent;
 }
-.room-tabs button.active, .tod button.active {
+.room-tabs button.active, .tod button.active, .quality button.active {
   color: #fff; border-color: rgba(91,140,255,0.5); background: rgba(91,140,255,0.2);
 }
 .team-list, .activity-log {
@@ -94,6 +94,11 @@ html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
 .agent-row.selected { border-color: rgba(91,140,255,0.35); background: rgba(91,140,255,0.08); }
 .agent-row .meta .name { font-size: 13px; font-weight: 600; }
 .agent-row .meta .sub { font-size: 11px; color: var(--muted); margin-top: 2px; line-height: 1.35; }
+.agent-row .meta .breed-tag {
+  display: inline-block; margin-top: 3px; margin-right: 4px;
+  font-size: 10px; padding: 1px 6px; border-radius: 4px;
+  background: rgba(251,191,36,0.12); color: #fcd34d;
+}
 .agent-row .meta .room-tag {
   display: inline-block; margin-top: 4px; font-size: 10px; padding: 1px 6px;
   border-radius: 4px; background: rgba(255,255,255,0.06); color: #aab3c7;
@@ -110,8 +115,19 @@ html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
   padding: 10px 16px calc(10px + var(--safe-b));
   background: rgba(8,12,24,0.9); border-top: 1px solid var(--border);
+  flex-wrap: wrap;
 }
-.tod { display: flex; gap: 6px; flex-wrap: wrap; }
+.controls-row {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  pointer-events: auto;
+}
+.quality, .tod, .zoom-ctrl { display: flex; gap: 6px; flex-wrap: wrap; }
+.zoom-ctrl button {
+  width: 34px; height: 34px; padding: 0;
+  border-radius: 10px; font-size: 16px; font-weight: 700;
+  color: #fff; line-height: 1;
+  display: inline-flex; align-items: center; justify-content: center;
+}
 .hint { font-size: 11px; color: var(--muted); white-space: nowrap; }
 
 #panelScrim {
@@ -128,7 +144,7 @@ html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
 
 /* Phone / narrow: full-bleed 3D + slide-up sheet */
 @media (max-width: 720px) {
-  :root { --sidebar-w: 0px; --bottombar-h: 56px; }
+  :root { --sidebar-w: 0px; --bottombar-h: 72px; }
 
   #topbar {
     right: 0;
@@ -149,7 +165,8 @@ html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
     gap: 8px;
   }
   .hint { display: none; }
-  .tod button { padding: 6px 12px; font-size: 12px; min-height: 36px; }
+  .tod button, .quality button { padding: 6px 10px; font-size: 12px; min-height: 36px; }
+  .zoom-ctrl button { width: 38px; height: 38px; min-height: 38px; }
 
   #panelScrim {
     display: block;
