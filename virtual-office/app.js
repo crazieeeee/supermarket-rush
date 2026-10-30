@@ -135,14 +135,30 @@
 
   // ——— Three.js ———
   const canvas = document.getElementById('c');
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  // Low power: phones / coarse pointer / Save-Data / few cores — keep look, cut GPU cost
+  const LOW = (() => {
+    try {
+      if (window.matchMedia('(max-width: 720px)').matches) return true;
+      if (window.matchMedia('(pointer: coarse)').matches) return true;
+      if (navigator.connection && navigator.connection.saveData) return true;
+      if (typeof navigator.hardwareConcurrency === 'number' && navigator.hardwareConcurrency > 0
+          && navigator.hardwareConcurrency <= 4) return true;
+    } catch (_) {}
+    return false;
+  })();
+  const renderer = new THREE.WebGLRenderer({
+    canvas,
+    antialias: !LOW,
+    alpha: false,
+    powerPreference: LOW ? 'low-power' : 'default',
+  });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, LOW ? 1 : 2));
   renderer.setClearColor(0x0b1020, 1);
-  renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.shadowMap.enabled = !LOW;
+  if (!LOW) renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
   const scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(0x0b1020, 0.012);
+  if (!LOW) scene.fog = new THREE.FogExp2(0x0b1020, 0.012);
 
   // Orthographic isometric-ish camera
   let frustumSize = 28;
@@ -165,20 +181,23 @@
   // Lights
   const hemi = new THREE.HemisphereLight(0x9eb7ff, 0x1a1520, 0.55);
   scene.add(hemi);
-  const sun = new THREE.DirectionalLight(0xfff2d6, 0.85);
+  const sun = new THREE.DirectionalLight(0xfff2d6, LOW ? 1.05 : 0.85);
   sun.position.set(20, 30, 10);
-  sun.castShadow = true;
-  sun.shadow.mapSize.set(2048, 2048);
-  sun.shadow.camera.left = -40;
-  sun.shadow.camera.right = 40;
-  sun.shadow.camera.top = 40;
-  sun.shadow.camera.bottom = -40;
+  if (!LOW) {
+    sun.castShadow = true;
+    sun.shadow.mapSize.set(2048, 2048);
+    sun.shadow.camera.left = -40;
+    sun.shadow.camera.right = 40;
+    sun.shadow.camera.top = 40;
+    sun.shadow.camera.bottom = -40;
+  }
   scene.add(sun);
   const fill = new THREE.DirectionalLight(0x4a6cff, 0.25);
   fill.position.set(-15, 12, -10);
   scene.add(fill);
-  const ambientNight = new THREE.AmbientLight(0x1a2240, 0.35);
+  const ambientNight = new THREE.AmbientLight(0x1a2240, LOW ? 0.55 : 0.35);
   scene.add(ambientNight);
+  if (LOW) hemi.intensity = 0.7;
 
   // City sky backdrop (simple)
   const skyGeo = new THREE.PlaneGeometry(120, 50);
@@ -203,11 +222,15 @@
   const wallMat = new THREE.MeshStandardMaterial({
     color: 0x1e293b, roughness: 0.9, metalness: 0.05,
   });
-  const glassMat = new THREE.MeshPhysicalMaterial({
-    color: 0x88aacc, transparent: true, opacity: 0.18,
-    roughness: 0.1, metalness: 0.1, transmission: 0.6,
-    thickness: 0.2, side: THREE.DoubleSide,
-  });
+  const glassMat = LOW
+    ? new THREE.MeshBasicMaterial({
+        color: 0x88aacc, transparent: true, opacity: 0.22, side: THREE.DoubleSide,
+      })
+    : new THREE.MeshPhysicalMaterial({
+        color: 0x88aacc, transparent: true, opacity: 0.18,
+        roughness: 0.1, metalness: 0.1, transmission: 0.6,
+        thickness: 0.2, side: THREE.DoubleSide,
+      });
   const trimMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.6 });
 
   function makeFloor(x0, x1, z0, z1, y) {
@@ -267,10 +290,12 @@
     );
     win.position.set(wx, 2.2, -10.18);
     building.add(win);
-    // soft glow
-    const glow = new THREE.PointLight(0x3b6ea8, 0.35, 8);
-    glow.position.set(wx, 2.2, -9.5);
-    building.add(glow);
+    // soft glow (desktop only — PointLights stack badly on phones)
+    if (!LOW) {
+      const glow = new THREE.PointLight(0x3b6ea8, 0.35, 8);
+      glow.position.set(wx, 2.2, -9.5);
+      building.add(glow);
+    }
   }
 
   // Glass room dividers
@@ -317,6 +342,10 @@
 
   // Furniture helpers
   const deskMat = new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.55, metalness: 0.2 });
+  const lampGeo = new THREE.CylinderGeometry(0.05, 0.08, 0.25, LOW ? 6 : 8);
+  const lampMat = new THREE.MeshStandardMaterial({
+    color: 0xfbbf24, emissive: 0xf59e0b, emissiveIntensity: LOW ? 0.85 : 0.6,
+  });
   const screenMat = new THREE.MeshStandardMaterial({
     color: 0x22d3ee, emissive: 0x0ea5e9, emissiveIntensity: 0.85, roughness: 0.4,
   });
@@ -348,16 +377,15 @@
     const m2 = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.35, 0.04), variant ? screenMat : screenMatAlt);
     m2.position.set(0.35, 1.05, -0.25);
     g.add(m2);
-    // lamp
-    const lamp = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.05, 0.08, 0.25, 8),
-      new THREE.MeshStandardMaterial({ color: 0xfbbf24, emissive: 0xf59e0b, emissiveIntensity: 0.6 })
-    );
+    // lamp (emissive mesh always; real PointLight only on desktop — dozens of lights lag phones)
+    const lamp = new THREE.Mesh(lampGeo, lampMat);
     lamp.position.set(0.7, 0.95, 0.2);
     g.add(lamp);
-    const pl = new THREE.PointLight(0xffcc66, 0.45, 3.5);
-    pl.position.set(0.7, 1.15, 0.2);
-    g.add(pl);
+    if (!LOW) {
+      const pl = new THREE.PointLight(0xffcc66, 0.45, 3.5);
+      pl.position.set(0.7, 1.15, 0.2);
+      g.add(pl);
+    }
     // chair
     const seat = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.08, 0.45), chairMat);
     seat.position.set(0, 0.45, 0.7);
@@ -375,10 +403,10 @@
 
   function makePlant(x, z, scale) {
     const g = new THREE.Group();
-    const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.15, 0.25, 10), plantPot);
+    const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.15, 0.25, LOW ? 6 : 10), plantPot);
     pot.position.y = 0.12;
     g.add(pot);
-    const leaf = new THREE.Mesh(new THREE.SphereGeometry(0.35 * scale, 10, 10), plantLeaf);
+    const leaf = new THREE.Mesh(new THREE.SphereGeometry(0.35 * scale, LOW ? 6 : 10, LOW ? 6 : 10), plantLeaf);
     leaf.position.y = 0.45 * scale + 0.2;
     leaf.scale.y = 1.3;
     g.add(leaf);
@@ -388,7 +416,7 @@
 
   function makeLounge(cx, cz) {
     const g = new THREE.Group();
-    const rug = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 2.2, 0.04, 32), rugMat);
+    const rug = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 2.2, 0.04, LOW ? 16 : 32), rugMat);
     rug.position.set(cx, 0.02, cz);
     g.add(rug);
     const sofa = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.55, 0.8), sofaMat);
@@ -670,8 +698,14 @@
     );
   }
 
-  function animate() {
+  let _rafAccum = 0;
+  const _frameMs = LOW ? 1000 / 30 : 0; // phones: cap ~30fps
+  function animate(now) {
     requestAnimationFrame(animate);
+    if (LOW) {
+      if (now - _rafAccum < _frameMs) return;
+      _rafAccum = now;
+    }
     const dt = Math.min(clock.getDelta(), 0.05);
     const t = clock.elapsedTime;
 
