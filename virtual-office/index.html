@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>King Hang's Staff Virtual Office</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app">
+    <header id="topbar">
+      <div class="title-block">
+        <h1>King Hang's Staff Virtual Office <span class="sim">[Simulation]</span></h1>
+        <p class="asof" id="asof">—</p>
+      </div>
+      <div class="legend occupancy">
+        <span><i class="dot working"></i> Working</span>
+        <span><i class="dot needyou"></i> Need You</span>
+        <span><i class="dot idle"></i> Idle</span>
+        <span><i class="dot free"></i> Free Desks</span>
+      </div>
+    </header>
+
+    <canvas id="c"></canvas>
+
+    <aside id="sidebar">
+      <section class="panel">
+        <h2>Team</h2>
+        <div class="room-tabs" id="roomTabs">
+          <button type="button" data-room="all" class="active">全部</button>
+          <button type="button" data-room="investment">Investment</button>
+          <button type="button" data-room="fx">外匯</button>
+          <button type="button" data-room="other">未分類</button>
+        </div>
+        <div id="teamList" class="team-list"></div>
+      </section>
+      <section class="panel activity-panel">
+        <h2>Activity</h2>
+        <div id="activityLog" class="activity-log"></div>
+      </section>
+    </aside>
+
+    <div id="bottombar">
+      <div class="legend activity-legend">
+        <span><i class="dot coding"></i> Coding</span>
+        <span><i class="dot browsing"></i> Browsing</span>
+        <span><i class="dot terminal"></i> In Terminal</span>
+        <span><i class="dot thinking"></i> Thinking</span>
+        <span><i class="dot needyou"></i> Needs You</span>
+        <span><i class="dot error"></i> Error</span>
+        <span><i class="dot idle"></i> Idle</span>
+      </div>
+      <div class="tod" id="tod">
+        <button type="button" data-tod="now" class="active">Now</button>
+        <button type="button" data-tod="day">Day</button>
+        <button type="button" data-tod="evening">Evening</button>
+        <button type="button" data-tod="night">Night</button>
+      </div>
+      <div class="hint">v1 · snapshot only · drag to orbit · scroll zoom</div>
+    </div>
+  </div>
+
+  <script src="vendor/three.min.js"></script>
+  <!-- fallback: https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js -->
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

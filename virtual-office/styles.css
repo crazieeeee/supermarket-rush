@@ -1,0 +1,97 @@
+:root {
+  --bg: #0b1020;
+  --panel: rgba(12, 16, 32, 0.92);
+  --border: rgba(255,255,255,0.08);
+  --text: #e8ecf7;
+  --muted: #8b93a7;
+  --accent: #5b8cff;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans TC", sans-serif; }
+#app { position: relative; width: 100%; height: 100%; overflow: hidden; }
+#c { display: block; width: 100%; height: 100%; }
+
+#topbar {
+  position: absolute; top: 0; left: 0; right: 320px; z-index: 5;
+  display: flex; align-items: flex-start; justify-content: space-between;
+  padding: 14px 18px; pointer-events: none;
+  background: linear-gradient(180deg, rgba(8,12,24,0.85), transparent);
+}
+.title-block h1 { margin: 0; font-size: 16px; font-weight: 650; letter-spacing: 0.02em; }
+.title-block .sim { color: var(--muted); font-weight: 500; font-size: 13px; }
+.title-block .asof { margin: 4px 0 0; font-size: 11px; color: var(--muted); }
+.legend { display: flex; flex-wrap: wrap; gap: 10px 14px; font-size: 11px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.dot {
+  display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+  background: #888; box-shadow: 0 0 6px currentColor;
+}
+.dot.working { background: #3b82f6; color: #3b82f6; }
+.dot.needyou { background: #f97316; color: #f97316; }
+.dot.idle { background: #6b7280; color: #6b7280; }
+.dot.free { background: transparent; border: 1.5px solid #c7d0e4; box-shadow: none; }
+.dot.coding { background: #a855f7; color: #a855f7; }
+.dot.browsing { background: #3b82f6; color: #3b82f6; }
+.dot.terminal { background: #f59e0b; color: #f59e0b; }
+.dot.thinking { background: #eab308; color: #eab308; }
+.dot.error { background: #ef4444; color: #ef4444; }
+
+#sidebar {
+  position: absolute; top: 0; right: 0; bottom: 52px; width: 320px; z-index: 6;
+  display: flex; flex-direction: column; gap: 10px;
+  padding: 12px; background: var(--panel); border-left: 1px solid var(--border);
+  backdrop-filter: blur(10px);
+}
+.panel { display: flex; flex-direction: column; min-height: 0; flex: 1; }
+.activity-panel { flex: 0.85; }
+.panel h2 {
+  margin: 0 0 8px; font-size: 12px; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--muted); font-weight: 600;
+}
+.room-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.room-tabs button, .tod button {
+  background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+  color: var(--muted); border-radius: 999px; padding: 4px 10px; font-size: 11px;
+  cursor: pointer;
+}
+.room-tabs button.active, .tod button.active {
+  color: #fff; border-color: rgba(91,140,255,0.5); background: rgba(91,140,255,0.2);
+}
+.team-list, .activity-log {
+  overflow: auto; min-height: 0; flex: 1;
+  scrollbar-width: thin; scrollbar-color: #334 #0b1020;
+}
+.agent-row {
+  display: grid; grid-template-columns: 10px 1fr; gap: 8px;
+  padding: 8px 6px; border-radius: 8px; cursor: pointer;
+  border: 1px solid transparent;
+}
+.agent-row:hover { background: rgba(255,255,255,0.04); }
+.agent-row.selected { border-color: rgba(91,140,255,0.35); background: rgba(91,140,255,0.08); }
+.agent-row .meta .name { font-size: 13px; font-weight: 600; }
+.agent-row .meta .sub { font-size: 11px; color: var(--muted); margin-top: 2px; line-height: 1.35; }
+.agent-row .meta .room-tag {
+  display: inline-block; margin-top: 4px; font-size: 10px; padding: 1px 6px;
+  border-radius: 4px; background: rgba(255,255,255,0.06); color: #aab3c7;
+}
+.activity-log .item {
+  padding: 7px 4px; border-bottom: 1px solid rgba(255,255,255,0.05);
+  font-size: 11px; color: #c5cce0; line-height: 1.4;
+}
+.activity-log .item .t { color: var(--muted); margin-right: 6px; }
+.activity-log .item .who { color: #9db4ff; font-weight: 600; }
+
+#bottombar {
+  position: absolute; left: 0; right: 320px; bottom: 0; z-index: 5;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 10px 16px; background: rgba(8,12,24,0.9); border-top: 1px solid var(--border);
+}
+.tod { display: flex; gap: 6px; }
+.hint { font-size: 11px; color: var(--muted); white-space: nowrap; }
+
+@media (max-width: 900px) {
+  #sidebar { width: 260px; }
+  #topbar, #bottombar { right: 260px; }
+  .activity-legend { display: none; }
+}
