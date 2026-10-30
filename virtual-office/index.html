@@ -52,13 +52,25 @@
         <span><i class="dot error"></i> Error</span>
         <span><i class="dot idle"></i> Idle</span>
       </div>
-      <div class="tod" id="tod">
-        <button type="button" data-tod="now" class="active">Now</button>
-        <button type="button" data-tod="day">Day</button>
-        <button type="button" data-tod="evening">Evening</button>
-        <button type="button" data-tod="night">Night</button>
+      <div class="controls-row">
+        <div class="quality" id="quality" title="畫面質素">
+          <button type="button" data-quality="auto">自動</button>
+          <button type="button" data-quality="high">高性能</button>
+          <button type="button" data-quality="low">低性能</button>
+        </div>
+        <div class="zoom-ctrl" id="zoomCtrl">
+          <button type="button" id="zoomIn" aria-label="放大">＋</button>
+          <button type="button" id="zoomOut" aria-label="縮小">－</button>
+          <button type="button" id="zoomFit" aria-label="重設視角">⊡</button>
+        </div>
+        <div class="tod" id="tod">
+          <button type="button" data-tod="now" class="active">Now</button>
+          <button type="button" data-tod="day">Day</button>
+          <button type="button" data-tod="evening">Evening</button>
+          <button type="button" data-tod="night">Night</button>
+        </div>
       </div>
-      <div class="hint">v1 · snapshot only · drag to orbit · scroll zoom</div>
+      <div class="hint">v1 · snapshot · drag orbit · scroll／按鈕 zoom</div>
     </div>
   </div>
 
