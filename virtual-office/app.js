@@ -721,3 +721,20 @@
   renderTeam();
   animate();
 })();
+
+// ——— Mobile panel (Team / Activity sheet) ———
+(function setupMobilePanel() {
+  const toggle = document.getElementById('panelToggle');
+  const scrim = document.getElementById('panelScrim');
+  if (!toggle) return;
+  const setOpen = (open) => {
+    document.body.classList.toggle('panel-open', open);
+    toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    toggle.textContent = open ? '關閉' : '名單';
+  };
+  toggle.addEventListener('click', () => setOpen(!document.body.classList.contains('panel-open')));
+  if (scrim) scrim.addEventListener('click', () => setOpen(false));
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') setOpen(false);
+  });
+})();

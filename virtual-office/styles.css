@@ -1,21 +1,27 @@
 :root {
   --bg: #0b1020;
-  --panel: rgba(12, 16, 32, 0.92);
+  --panel: rgba(12, 16, 32, 0.94);
   --border: rgba(255,255,255,0.08);
   --text: #e8ecf7;
   --muted: #8b93a7;
   --accent: #5b8cff;
+  --sidebar-w: 320px;
+  --bottombar-h: 52px;
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-t: env(safe-area-inset-top, 0px);
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
-  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans TC", sans-serif; }
-#app { position: relative; width: 100%; height: 100%; overflow: hidden; }
-#c { display: block; width: 100%; height: 100%; }
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans TC", sans-serif;
+  -webkit-text-size-adjust: 100%; }
+#app { position: relative; width: 100%; height: 100%; height: 100dvh; overflow: hidden; }
+#c { display: block; width: 100%; height: 100%; touch-action: none; }
 
 #topbar {
-  position: absolute; top: 0; left: 0; right: 320px; z-index: 5;
-  display: flex; align-items: flex-start; justify-content: space-between;
-  padding: 14px 18px; pointer-events: none;
+  position: absolute; top: 0; left: 0; right: var(--sidebar-w); z-index: 5;
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 10px;
+  padding: calc(14px + var(--safe-t)) 18px 14px;
+  pointer-events: none;
   background: linear-gradient(180deg, rgba(8,12,24,0.85), transparent);
 }
 .title-block h1 { margin: 0; font-size: 16px; font-weight: 650; letter-spacing: 0.02em; }
@@ -37,8 +43,24 @@ html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
 .dot.thinking { background: #eab308; color: #eab308; }
 .dot.error { background: #ef4444; color: #ef4444; }
 
+#panelToggle {
+  display: none;
+  pointer-events: auto;
+  flex-shrink: 0;
+  margin-left: auto;
+  background: rgba(91,140,255,0.22);
+  border: 1px solid rgba(91,140,255,0.45);
+  color: #fff; border-radius: 999px;
+  padding: 8px 14px; font-size: 13px; font-weight: 600;
+  cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+#panelToggle[aria-expanded="true"] {
+  background: rgba(255,255,255,0.1);
+  border-color: var(--border);
+}
+
 #sidebar {
-  position: absolute; top: 0; right: 0; bottom: 52px; width: 320px; z-index: 6;
+  position: absolute; top: 0; right: 0; bottom: var(--bottombar-h); width: var(--sidebar-w); z-index: 6;
   display: flex; flex-direction: column; gap: 10px;
   padding: 12px; background: var(--panel); border-left: 1px solid var(--border);
   backdrop-filter: blur(10px);
@@ -53,7 +75,7 @@ html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
 .room-tabs button, .tod button {
   background: rgba(255,255,255,0.04); border: 1px solid var(--border);
   color: var(--muted); border-radius: 999px; padding: 4px 10px; font-size: 11px;
-  cursor: pointer;
+  cursor: pointer; -webkit-tap-highlight-color: transparent;
 }
 .room-tabs button.active, .tod button.active {
   color: #fff; border-color: rgba(91,140,255,0.5); background: rgba(91,140,255,0.2);
@@ -61,6 +83,7 @@ html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
 .team-list, .activity-log {
   overflow: auto; min-height: 0; flex: 1;
   scrollbar-width: thin; scrollbar-color: #334 #0b1020;
+  -webkit-overflow-scrolling: touch;
 }
 .agent-row {
   display: grid; grid-template-columns: 10px 1fr; gap: 8px;
@@ -83,15 +106,81 @@ html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
 .activity-log .item .who { color: #9db4ff; font-weight: 600; }
 
 #bottombar {
-  position: absolute; left: 0; right: 320px; bottom: 0; z-index: 5;
+  position: absolute; left: 0; right: var(--sidebar-w); bottom: 0; z-index: 5;
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  padding: 10px 16px; background: rgba(8,12,24,0.9); border-top: 1px solid var(--border);
+  padding: 10px 16px calc(10px + var(--safe-b));
+  background: rgba(8,12,24,0.9); border-top: 1px solid var(--border);
 }
-.tod { display: flex; gap: 6px; }
+.tod { display: flex; gap: 6px; flex-wrap: wrap; }
 .hint { font-size: 11px; color: var(--muted); white-space: nowrap; }
 
+#panelScrim {
+  display: none;
+  position: absolute; inset: 0; z-index: 7;
+  background: rgba(0,0,0,0.45);
+  border: 0; padding: 0; cursor: pointer;
+}
+
 @media (max-width: 900px) {
-  #sidebar { width: 260px; }
-  #topbar, #bottombar { right: 260px; }
+  :root { --sidebar-w: 260px; }
   .activity-legend { display: none; }
+}
+
+/* Phone / narrow: full-bleed 3D + slide-up sheet */
+@media (max-width: 720px) {
+  :root { --sidebar-w: 0px; --bottombar-h: 56px; }
+
+  #topbar {
+    right: 0;
+    flex-wrap: wrap;
+    padding: calc(10px + var(--safe-t)) 12px 10px;
+    pointer-events: none;
+  }
+  #topbar .title-block { max-width: calc(100% - 96px); }
+  .title-block h1 { font-size: 13px; line-height: 1.25; }
+  .title-block .sim { font-size: 11px; }
+  .title-block .asof { font-size: 10px; }
+  .occupancy { width: 100%; margin-top: 6px; gap: 8px 10px; font-size: 10px; }
+  #panelToggle { display: inline-flex; align-items: center; }
+
+  #bottombar {
+    right: 0;
+    padding: 8px 12px calc(8px + var(--safe-b));
+    gap: 8px;
+  }
+  .hint { display: none; }
+  .tod button { padding: 6px 12px; font-size: 12px; min-height: 36px; }
+
+  #panelScrim {
+    display: block;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+  body.panel-open #panelScrim { opacity: 1; pointer-events: auto; }
+
+  #sidebar {
+    top: auto; left: 0; right: 0; bottom: 0;
+    width: 100%;
+    max-height: min(62dvh, 520px);
+    padding: 10px 12px calc(12px + var(--safe-b));
+    border-left: none;
+    border-top: 1px solid var(--border);
+    border-radius: 16px 16px 0 0;
+    z-index: 8;
+    transform: translateY(110%);
+    transition: transform 0.28s cubic-bezier(0.2, 0.9, 0.2, 1);
+    box-shadow: 0 -8px 32px rgba(0,0,0,0.45);
+  }
+  body.panel-open #sidebar { transform: translateY(0); }
+
+  #sidebar::before {
+    content: "";
+    display: block; width: 36px; height: 4px; border-radius: 999px;
+    background: rgba(255,255,255,0.22);
+    margin: 2px auto 10px;
+  }
+  .panel { flex: 1 1 50%; }
+  .activity-panel { flex: 1 1 40%; }
+  .room-tabs button { padding: 6px 12px; font-size: 12px; min-height: 34px; }
+  .agent-row { padding: 10px 6px; }
 }
