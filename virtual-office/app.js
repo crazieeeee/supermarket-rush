@@ -515,34 +515,147 @@
   scene.add(avatarGroup);
   const avatarActors = [];
 
+  // Shared cat geos (one set for all bots — cheap on phones)
+  const _catSeg = LOW ? 8 : 12;
+  const catBodyGeo = new THREE.SphereGeometry(0.28, _catSeg, _catSeg);
+  const catHeadGeo = new THREE.SphereGeometry(0.22, _catSeg, _catSeg);
+  const catEarGeo = new THREE.ConeGeometry(0.09, 0.16, LOW ? 5 : 6);
+  const catEarInnerGeo = new THREE.ConeGeometry(0.05, 0.1, LOW ? 4 : 5);
+  const catTailGeo = new THREE.CapsuleGeometry(0.045, 0.28, 4, LOW ? 6 : 8);
+  const catEyeGeo = new THREE.SphereGeometry(0.035, 6, 6);
+  const catNoseGeo = new THREE.SphereGeometry(0.028, 6, 6);
+  const catCheekGeo = new THREE.SphereGeometry(0.06, 6, 6);
+  const catBowGeo = new THREE.SphereGeometry(0.05, 6, 6);
+  const catMuffGeo = new THREE.TorusGeometry(0.12, 0.035, 6, LOW ? 10 : 14);
+
+  const CAT_PALETTES = [
+    { fur: 0xf5d0a9, belly: 0xfff6eb, ear: 0xf9a8d4, accent: 0xf472b6 }, // cream peach
+    { fur: 0xf97316, belly: 0xfed7aa, ear: 0xfb7185, accent: 0xea580c }, // orange tabby
+    { fur: 0x1f2937, belly: 0xe5e7eb, ear: 0xf9a8d4, accent: 0x38bdf8 }, // tuxedo
+    { fur: 0xd6d3d1, belly: 0xfafaf9, ear: 0xfbcfe8, accent: 0xa78bfa }, // silver
+    { fur: 0x78350f, belly: 0xfde68a, ear: 0xf9a8d4, accent: 0xfbbf24 }, // chocolate
+    { fur: 0xfce7f3, belly: 0xffffff, ear: 0xfb7185, accent: 0xec4899 }, // pinkish
+    { fur: 0x86efac, belly: 0xecfdf5, ear: 0xf9a8d4, accent: 0x22c55e }, // mint
+    { fur: 0x93c5fd, belly: 0xeff6ff, ear: 0xf9a8d4, accent: 0x3b82f6 }, // sky
+    { fur: 0xc4b5fd, belly: 0xf5f3ff, ear: 0xf9a8d4, accent: 0x8b5cf6 }, // lavender
+    { fur: 0xfca5a5, belly: 0xfef2f2, ear: 0xfb7185, accent: 0xef4444 }, // rosy
+    { fur: 0xfde047, belly: 0xfefce8, ear: 0xf9a8d4, accent: 0xeab308 }, // butter
+    { fur: 0x2dd4bf, belly: 0xccfbf1, ear: 0xf9a8d4, accent: 0x14b8a6 }, // teal
+  ];
+
+  function hashStr(s) {
+    let h = 2166136261 >>> 0;
+    for (let i = 0; i < s.length; i++) {
+      h ^= s.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return h >>> 0;
+  }
+
   function makeAvatar(agent) {
     const g = new THREE.Group();
-    const col = agent.color;
-    const body = new THREE.Mesh(
-      new THREE.CapsuleGeometry(0.22, 0.35, 6, 12),
-      new THREE.MeshStandardMaterial({
-        color: col, emissive: col, emissiveIntensity: 0.35, roughness: 0.4,
-      })
-    );
-    body.position.y = 0.55;
-    body.castShadow = true;
+    const key = agent.id || agent.name || '';
+    const h = hashStr(key);
+    const pal = CAT_PALETTES[h % CAT_PALETTES.length];
+    const style = h % 4; // 0 plain, 1 bow, 2 scarf, 3 cheek fluff
+    const furMat = new THREE.MeshStandardMaterial({
+      color: pal.fur, roughness: 0.75, metalness: 0.05,
+      emissive: pal.fur, emissiveIntensity: 0.08,
+    });
+    const bellyMat = new THREE.MeshStandardMaterial({
+      color: pal.belly, roughness: 0.85, metalness: 0.0,
+    });
+    const earMat = new THREE.MeshStandardMaterial({ color: pal.ear, roughness: 0.7 });
+    const eyeMat = new THREE.MeshBasicMaterial({ color: 0x111827 });
+    const noseMat = new THREE.MeshBasicMaterial({ color: 0xf472b6 });
+    const accentMat = new THREE.MeshStandardMaterial({
+      color: pal.accent, roughness: 0.55, emissive: pal.accent, emissiveIntensity: 0.25,
+    });
+
+    // body
+    const body = new THREE.Mesh(catBodyGeo, furMat);
+    body.position.y = 0.32;
+    body.scale.set(1.05, 0.9, 0.95);
+    body.castShadow = !LOW;
     g.add(body);
-    // status ring
+    // belly patch
+    const belly = new THREE.Mesh(catBodyGeo, bellyMat);
+    belly.position.set(0, 0.28, 0.12);
+    belly.scale.set(0.72, 0.65, 0.55);
+    g.add(belly);
+    // head
+    const head = new THREE.Mesh(catHeadGeo, furMat);
+    head.position.y = 0.62;
+    head.castShadow = !LOW;
+    g.add(head);
+    // ears
+    [[-0.12, 0.78, 0], [0.12, 0.78, 0]].forEach(([x, y, z], i) => {
+      const ear = new THREE.Mesh(catEarGeo, furMat);
+      ear.position.set(x, y, z);
+      ear.rotation.z = i === 0 ? 0.35 : -0.35;
+      ear.rotation.x = -0.15;
+      g.add(ear);
+      const inner = new THREE.Mesh(catEarInnerGeo, earMat);
+      inner.position.set(x, y - 0.01, 0.02);
+      inner.rotation.z = i === 0 ? 0.35 : -0.35;
+      g.add(inner);
+    });
+    // eyes
+    [[-0.08, 0.64, 0.18], [0.08, 0.64, 0.18]].forEach(([x, y, z]) => {
+      const eye = new THREE.Mesh(catEyeGeo, eyeMat);
+      eye.position.set(x, y, z);
+      g.add(eye);
+    });
+    // nose
+    const nose = new THREE.Mesh(catNoseGeo, noseMat);
+    nose.position.set(0, 0.58, 0.2);
+    g.add(nose);
+    // cheeks
+    if (style === 3 || style === 1) {
+      [[-0.16, 0.56, 0.12], [0.16, 0.56, 0.12]].forEach(([x, y, z]) => {
+        const cheek = new THREE.Mesh(catCheekGeo, bellyMat);
+        cheek.position.set(x, y, z);
+        g.add(cheek);
+      });
+    }
+    // accessories for variety
+    if (style === 1) {
+      const bowL = new THREE.Mesh(catBowGeo, accentMat);
+      bowL.position.set(-0.06, 0.74, 0.12);
+      const bowR = new THREE.Mesh(catBowGeo, accentMat);
+      bowR.position.set(0.06, 0.74, 0.12);
+      g.add(bowL, bowR);
+    } else if (style === 2) {
+      const muff = new THREE.Mesh(catMuffGeo, accentMat);
+      muff.position.set(0, 0.48, 0.02);
+      muff.rotation.x = Math.PI / 2;
+      g.add(muff);
+    }
+    // tail (cute curl)
+    const tail = new THREE.Mesh(catTailGeo, furMat);
+    tail.position.set(0.22, 0.28, -0.22);
+    tail.rotation.z = 0.9;
+    tail.rotation.x = 0.4;
+    g.add(tail);
+
+    // status ring under paws
     const ring = new THREE.Mesh(
-      new THREE.TorusGeometry(0.32, 0.035, 8, 24),
+      new THREE.TorusGeometry(0.34, 0.03, 8, LOW ? 16 : 24),
       new THREE.MeshBasicMaterial({ color: activityColor(agent.activity, agent.status) })
     );
     ring.rotation.x = Math.PI / 2;
-    ring.position.y = 0.08;
+    ring.position.y = 0.04;
     g.add(ring);
     // label
     const label = makeNameLabel(agent.name, ROOM_META[agent.room].accent);
-    label.position.y = 1.35;
+    label.position.y = 1.15;
     g.add(label);
 
     g.userData.agent = agent;
     g.userData.ring = ring;
     g.userData.body = body;
+    g.userData.tail = tail;
+    g.userData.palette = pal;
     return g;
   }
 
@@ -736,11 +849,15 @@
           pos.y = 0;
         }
       }
-      // pulse ring
+      // pulse ring + cute tail wag
       const ring = actor.mesh.userData.ring;
       if (ring) {
         const s = 1 + 0.08 * Math.sin(t * 3 + actor.phase);
         ring.scale.set(s, s, s);
+      }
+      const tail = actor.mesh.userData.tail;
+      if (tail) {
+        tail.rotation.z = 0.9 + 0.25 * Math.sin(t * 2.2 + actor.phase);
       }
     });
 
