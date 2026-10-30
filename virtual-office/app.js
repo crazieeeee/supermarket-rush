@@ -416,10 +416,17 @@
   // Shared slab under all rooms
   building.add(makeFloor(-20.5, 26.5, -10.5, 10.5, -0.12));
 
-  // Outer walls: back only (dollhouse sides — no full-height L/R walls that block low orbits)
+  // Outer walls: back as inward-facing plane (no box so orbiting behind culls); L/R are rails
   const WALL_H = 4.2;
   const RAIL_H = 0.62;
-  building.add(makeWall(3, -10.35, 47, WALL_H, 0.3)); // back
+  const GLASS_H = 2.2;
+  const backWallMat = wallMat.clone();
+  backWallMat.side = THREE.FrontSide; // +Z into room; culled from behind
+  const backWall = new THREE.Mesh(new THREE.PlaneGeometry(47, WALL_H), backWallMat);
+  backWall.position.set(3, WALL_H / 2, -10.2);
+  backWall.castShadow = true;
+  backWall.receiveShadow = true;
+  building.add(backWall);
   // Knee-height rails mark footprint without occluding desks/cats
   building.add(makeWall(-20.35, 0, 0.3, RAIL_H, 21)); // left rail
   building.add(makeWall(26.35, 0, 0.3, RAIL_H, 21)); // right rail
@@ -441,9 +448,9 @@
     }
   }
 
-  // Glass room dividers
-  building.add(makeGlassPartition(-2, -10, -2, 10, WALL_H));
-  building.add(makeGlassPartition(10, -10, 10, 10, WALL_H));
+  // Glass room dividers (short so they don't read as dark slabs when orbiting)
+  building.add(makeGlassPartition(-2, -10, -2, 10, GLASS_H));
+  building.add(makeGlassPartition(10, -10, 10, 10, GLASS_H));
 
   // Room labels (sprites)
   function makeTextSprite(text, color) {
@@ -1041,7 +1048,9 @@
     const dy = e.clientY - lastY;
     lastX = e.clientX; lastY = e.clientY;
     theta -= dx * 0.005;
-    phi = Math.max(0.75, Math.min(1.35, phi - dy * 0.005));
+    // Keep camera on open-front hemisphere (sin(theta)>0 → +Z); no wrap past back wall
+    theta = Math.max(0.12, Math.min(Math.PI - 0.12, theta));
+    phi = Math.max(0.75, Math.min(1.15, phi - dy * 0.005));
     syncCamFromSpherical();
   });
   const FRUSTUM_MIN = 14, FRUSTUM_MAX = 48;
