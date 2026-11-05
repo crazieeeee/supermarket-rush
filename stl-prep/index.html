@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-HK">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>STL Prep · 掃描模型清理</title>
+  <meta name="description" content="Upload scanned STL/OBJ → preview → light cleanup → download print-ready STL" />
+  <style>
+    :root {
+      --bg: #0f1419;
+      --bg2: #1a222d;
+      --panel: #1e2836;
+      --panel2: #243041;
+      --border: #2f3d52;
+      --text: #e8eef6;
+      --muted: #8b9bb0;
+      --accent: #3d9cf0;
+      --accent2: #2ecc9a;
+      --warn: #f0b429;
+      --danger: #e85d5d;
+      --radius: 14px;
+      --shadow: 0 12px 40px rgba(0,0,0,.35);
+      --font: "Segoe UI", "PingFang HK", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      font-family: var(--font);
+      background: radial-gradient(1200px 600px at 10% -10%, #1a3050 0%, transparent 55%),
+                  radial-gradient(900px 500px at 100% 0%, #163528 0%, transparent 50%),
+                  var(--bg);
+      color: var(--text);
+      line-height: 1.45;
+    }
+    .app {
+      display: grid;
+      grid-template-columns: minmax(300px, 380px) 1fr;
+      grid-template-rows: auto 1fr;
+      height: 100%;
+      max-width: 1400px;
+      margin: 0 auto;
+      gap: 0;
+    }
+    header {
+      grid-column: 1 / -1;
+      padding: 18px 22px 12px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(15,20,25,.75);
+      backdrop-filter: blur(10px);
+    }
+    header h1 {
+      margin: 0 0 6px;
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: .02em;
+    }
+    header h1 span { color: var(--accent); font-weight: 600; }
+    header p {
+      margin: 0;
+      color: var(--muted);
+      font-size: .92rem;
+      max-width: 920px;
+    }
+    .sidebar {
+      overflow-y: auto;
+      padding: 16px;
+      border-right: 1px solid var(--border);
+      background: rgba(26,34,45,.55);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .viewport-wrap {
+      position: relative;
+      min-height: 360px;
+      background:
+        linear-gradient(180deg, #121820 0%, #0c1016 100%);
+    }
+    #viewport {
+      width: 100%;
+      height: 100%;
+      display: block;
+      touch-action: none;
+    }
+    .overlay-hint {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      padding: 24px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 1.05rem;
+      background: rgba(10,14,20,.35);
+    }
+    .overlay-hint strong { color: var(--text); }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 14px 12px;
+      box-shadow: var(--shadow);
+    }
+    .card h2 {
+      margin: 0 0 10px;
+      font-size: .95rem;
+      font-weight: 650;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card h2 .tag {
+      font-size: .7rem;
+      font-weight: 600;
+      color: var(--accent);
+      background: rgba(61,156,240,.12);
+      border: 1px solid rgba(61,156,240,.35);
+      padding: 2px 7px;
+      border-radius: 999px;
+    }
+    .drop {
+      border: 1.5px dashed #3a4d66;
+      border-radius: 12px;
+      padding: 22px 14px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color .15s, background .15s;
+      background: var(--panel2);
+    }
+    .drop:hover, .drop.dragover {
+      border-color: var(--accent);
+      background: rgba(61,156,240,.08);
+    }
+    .drop .icon { font-size: 1.8rem; margin-bottom: 6px; }
+    .drop .main { font-weight: 600; margin-bottom: 4px; }
+    .drop .sub { color: var(--muted); font-size: .85rem; }
+    input[type="file"] { display: none; }
+    .row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .row + .row { margin-top: 8px; }
+    label.field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: .82rem;
+      color: var(--muted);
+      flex: 1;
+      min-width: 120px;
+    }
+    label.field input[type="number"] {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: .95rem;
+      width: 100%;
+    }
+    label.field input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    button {
+      font-family: inherit;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--panel2);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 9px 12px;
+      font-size: .88rem;
+      font-weight: 600;
+      transition: background .12s, border-color .12s, transform .08s;
+    }
+    button:hover:not(:disabled) {
+      background: #2c3c50;
+      border-color: #4a607a;
+    }
+    button:active:not(:disabled) { transform: translateY(1px); }
+    button:disabled {
+      opacity: .45;
+      cursor: not-allowed;
+    }
+    button.primary {
+      background: linear-gradient(180deg, #4aa8f5, #2f87d8);
+      border-color: #2a78c4;
+      color: #fff;
+      flex: 1;
+    }
+    button.primary:hover:not(:disabled) {
+      background: linear-gradient(180deg, #5bb4fb, #3893e0);
+    }
+    button.success {
+      background: linear-gradient(180deg, #3ad4a8, #27b889);
+      border-color: #1f9a73;
+      color: #06261a;
+      flex: 1;
+    }
+    button.success:hover:not(:disabled) {
+      background: linear-gradient(180deg, #4ce0b4, #2fc794);
+    }
+    button.ghost { background: transparent; }
+    .tools { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .tools button { width: 100%; }
+    .stats {
+      font-size: .86rem;
+      color: var(--muted);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px 10px;
+    }
+    .stats b { color: var(--text); font-weight: 650; }
+    .note {
+      font-size: .82rem;
+      color: var(--muted);
+      background: rgba(240,180,41,.08);
+      border: 1px solid rgba(240,180,41,.28);
+      border-radius: 10px;
+      padding: 10px 12px;
+    }
+    .note strong { color: var(--warn); }
+    .status {
+      font-size: .82rem;
+      color: var(--accent2);
+      min-height: 1.2em;
+    }
+    .status.error { color: var(--danger); }
+    .toolbar {
+      position: absolute;
+      left: 12px;
+      bottom: 12px;
+      display: flex;
+      gap: 8px;
+      z-index: 2;
+    }
+    .toolbar button {
+      background: rgba(30,40,54,.9);
+      backdrop-filter: blur(6px);
+      padding: 8px 11px;
+      font-size: .8rem;
+    }
+    footer {
+      font-size: .75rem;
+      color: var(--muted);
+      text-align: center;
+      padding-top: 4px;
+    }
+    @media (max-width: 860px) {
+      .app {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto 1fr;
+        height: auto;
+        min-height: 100%;
+      }
+      .sidebar {
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+        max-height: none;
+      }
+      .viewport-wrap { height: 55vh; min-height: 320px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>STL Prep <span>· 掃描模型清理</span></h1>
+      <p>
+        先用手機 <strong>Polycam / Scaniverse / Kiri Engine</strong> 掃描物件並匯出 <strong>STL / OBJ</strong>，
+        再上載到呢度做預覽同輕度清理，最後下載可打印 STL。
+        <em style="color:var(--muted)">(Scan on phone → upload → clean → download)</em>
+      </p>
+    </header>
+
+    <aside class="sidebar">
+      <div class="card">
+        <h2>上載檔案 <span class="tag">Upload</span></h2>
+        <div class="drop" id="dropZone" tabindex="0" role="button" aria-label="上載 STL 或 OBJ">
+          <div class="icon">📦</div>
+          <div class="main">拖放 STL / OBJ 到呢度</div>
+          <div class="sub">或撳呢度選擇檔案 · binary / ASCII STL · OBJ</div>
+        </div>
+        <input type="file" id="fileInput" accept=".stl,.obj,model/stl,model/obj,application/sla" />
+        <div class="status" id="status" style="margin-top:8px"></div>
+      </div>
+
+      <div class="card">
+        <h2>模型資料 <span class="tag">Stats</span></h2>
+        <div class="stats" id="stats">
+          <div>三角形 Tris：<b>—</b></div>
+          <div>頂點 Verts：<b>—</b></div>
+          <div>闊 X：<b>—</b></div>
+          <div>高 Y：<b>—</b></div>
+          <div>深 Z：<b>—</b></div>
+          <div>檔名：<b>—</b></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>清理工具 <span class="tag">Tools</span></h2>
+        <div class="tools">
+          <button type="button" id="btnCenter" disabled title="移到原點">置中 Center</button>
+          <button type="button" id="btnFlat" disabled title="按包圍盒放平">放平 Lay flat</button>
+          <button type="button" id="btnNormals" disabled title="重算法線">法線 Normals</button>
+          <button type="button" id="btnRepair" disabled title="清零面積三角、合併近頂點">軟修復 Repair</button>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <label class="field">
+            目標最大邊 (mm) · Max size
+            <input type="number" id="targetSize" value="50" min="1" step="1" />
+          </label>
+          <button type="button" id="btnScale" disabled style="align-self:flex-end;min-width:110px">等比縮放 Scale</button>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <button type="button" class="success" id="btnDownload" disabled>下載清理後 STL · Download</button>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <button type="button" class="ghost" id="btnReset" disabled style="flex:1">還原原檔 · Reset</button>
+        </div>
+      </div>
+
+      <div class="note">
+        <strong>注意：</strong>呢度只做<strong>輕度整理</strong>（置中、放平、縮放、法線、清爛三角）。
+        掃描好差、破洞多，仍然要用 Meshmixer / Blender 深修。
+        <br /><em>Light prep only — bad scans still need Meshmixer/Blender.</em>
+      </div>
+      <footer>STL Prep · 本機處理 · 唔會上載去伺服器</footer>
+    </aside>
+
+    <div class="viewport-wrap">
+      <canvas id="viewport"></canvas>
+      <div class="overlay-hint" id="hint">
+        <div>
+          <strong>未有模型</strong><br />
+          拖放或選擇 .stl / .obj 開始預覽
+        </div>
+      </div>
+      <div class="toolbar">
+        <button type="button" id="btnFit" disabled>對準畫面 Fit</button>
+        <button type="button" id="btnGrid" disabled>網格 Grid</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+    }
+  }
+  </script>
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { STLLoader } from 'three/addons/loaders/STLLoader.js';
+    import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
+    import { STLExporter } from 'three/addons/exporters/STLExporter.js';
+    import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
+
+    const $ = (id) => document.getElementById(id);
+    const dropZone = $('dropZone');
+    const fileInput = $('fileInput');
+    const statusEl = $('status');
+    const hint = $('hint');
+    const statsEl = $('stats');
+
+    const buttons = [
+      'btnCenter','btnFlat','btnNormals','btnRepair','btnScale',
+      'btnDownload','btnReset','btnFit','btnGrid'
+    ].map($);
+
+    let mesh = null;
+    let originalGeometry = null;
+    let fileName = '';
+    let showGrid = true;
+
+    // --- Three.js scene ---
+    const canvas = $('viewport');
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setClearColor(0x0c1016, 1);
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(45, 1, 0.01, 5000);
+    camera.position.set(80, 60, 100);
+
+    const controls = new OrbitControls(camera, canvas);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.08;
+    controls.target.set(0, 0, 0);
+
+    const hemi = new THREE.HemisphereLight(0xb8d4ff, 0x2a2a2a, 0.85);
+    scene.add(hemi);
+    const dir = new THREE.DirectionalLight(0xffffff, 0.9);
+    dir.position.set(40, 80, 50);
+    scene.add(dir);
+    const fill = new THREE.DirectionalLight(0x88aacc, 0.35);
+    fill.position.set(-50, 20, -40);
+    scene.add(fill);
+
+    const grid = new THREE.GridHelper(200, 20, 0x3d9cf0, 0x2a3545);
+    grid.material.transparent = true;
+    grid.material.opacity = 0.55;
+    scene.add(grid);
+
+    const axes = new THREE.AxesHelper(30);
+    axes.position.y = 0.01;
+    scene.add(axes);
+
+    const mat = new THREE.MeshStandardMaterial({
+      color: 0x6eb6f5,
+      metalness: 0.15,
+      roughness: 0.55,
+      side: THREE.DoubleSide,
+      flatShading: false,
+    });
+
+    function resize() {
+      const wrap = canvas.parentElement;
+      const w = wrap.clientWidth;
+      const h = wrap.clientHeight;
+      renderer.setSize(w, h, false);
+      camera.aspect = w / Math.max(h, 1);
+      camera.updateProjectionMatrix();
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    function setStatus(msg, isError = false) {
+      statusEl.textContent = msg || '';
+      statusEl.classList.toggle('error', !!isError);
+    }
+
+    function setEnabled(on) {
+      buttons.forEach((b) => { b.disabled = !on; });
+    }
+
+    function clearMesh() {
+      if (mesh) {
+        scene.remove(mesh);
+        mesh.geometry.dispose();
+        mesh = null;
+      }
+    }
+
+    function geometryFromObject(obj) {
+      const geos = [];
+      obj.traverse((c) => {
+        if (c.isMesh && c.geometry) {
+          const g = c.geometry.index ? c.geometry.toNonIndexed() : c.geometry.clone();
+          g.applyMatrix4(c.matrixWorld);
+          geos.push(g);
+        }
+      });
+      if (!geos.length) throw new Error('OBJ 入面搵唔到網格');
+      // Merge into one BufferGeometry
+      const positions = [];
+      const normals = [];
+      for (const g of geos) {
+        const pos = g.getAttribute('position');
+        const nor = g.getAttribute('normal');
+        for (let i = 0; i < pos.count; i++) {
+          positions.push(pos.getX(i), pos.getY(i), pos.getZ(i));
+          if (nor) normals.push(nor.getX(i), nor.getY(i), nor.getZ(i));
+        }
+      }
+      const merged = new THREE.BufferGeometry();
+      merged.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+      if (normals.length === positions.length) {
+        merged.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3));
+      } else {
+        merged.computeVertexNormals();
+      }
+      geos.forEach((g) => g.dispose());
+      return merged;
+    }
+
+    function ensureNonIndexed(geo) {
+      if (geo.index) {
+        const g = geo.toNonIndexed();
+        geo.dispose();
+        return g;
+      }
+      return geo;
+    }
+
+    function showMesh(geometry, name) {
+      clearMesh();
+      let geo = ensureNonIndexed(geometry);
+      if (!geo.getAttribute('normal')) geo.computeVertexNormals();
+      mesh = new THREE.Mesh(geo, mat);
+      scene.add(mesh);
+      fileName = name || 'model.stl';
+      hint.style.display = 'none';
+      setEnabled(true);
+      updateStats();
+      fitCamera();
+    }
+
+    function bboxSize(geo) {
+      geo.computeBoundingBox();
+      const b = geo.boundingBox;
+      return {
+        x: b.max.x - b.min.x,
+        y: b.max.y - b.min.y,
+        z: b.max.z - b.min.z,
+        box: b,
+      };
+    }
+
+    function updateStats() {
+      if (!mesh) {
+        statsEl.innerHTML = `
+          <div>三角形 Tris：<b>—</b></div>
+          <div>頂點 Verts：<b>—</b></div>
+          <div>闊 X：<b>—</b></div>
+          <div>高 Y：<b>—</b></div>
+          <div>深 Z：<b>—</b></div>
+          <div>檔名：<b>—</b></div>`;
+        return;
+      }
+      const geo = mesh.geometry;
+      const pos = geo.getAttribute('position');
+      const tris = Math.floor(pos.count / 3);
+      const { x, y, z } = bboxSize(geo);
+      const fmt = (n) => (Math.abs(n) >= 100 ? n.toFixed(1) : n.toFixed(2));
+      statsEl.innerHTML = `
+        <div>三角形 Tris：<b>${tris.toLocaleString()}</b></div>
+        <div>頂點 Verts：<b>${pos.count.toLocaleString()}</b></div>
+        <div>闊 X：<b>${fmt(x)} mm</b></div>
+        <div>高 Y：<b>${fmt(y)} mm</b></div>
+        <div>深 Z：<b>${fmt(z)} mm</b></div>
+        <div>檔名：<b title="${fileName}">${fileName.length > 22 ? fileName.slice(0,20)+'…' : fileName}</b></div>`;
+    }
+
+    function fitCamera() {
+      if (!mesh) return;
+      const geo = mesh.geometry;
+      geo.computeBoundingSphere();
+      const s = geo.boundingSphere;
+      const r = Math.max(s.radius, 1);
+      controls.target.copy(s.center);
+      const dist = r * 2.6 / Math.tan(THREE.MathUtils.degToRad(camera.fov * 0.5));
+      const dir = new THREE.Vector3(1, 0.7, 1.2).normalize();
+      camera.position.copy(s.center).addScaledVector(dir, dist);
+      camera.near = Math.max(dist / 200, 0.01);
+      camera.far = dist * 50;
+      camera.updateProjectionMatrix();
+      controls.update();
+      // Scale grid to model
+      const size = Math.max(r * 4, 20);
+      grid.scale.setScalar(size / 200);
+    }
+
+    async function loadFile(file) {
+      if (!file) return;
+      const name = file.name || 'model';
+      const lower = name.toLowerCase();
+      setStatus('讀緊檔案… Loading…');
+      try {
+        const buf = await file.arrayBuffer();
+        let geometry;
+        if (lower.endsWith('.stl')) {
+          geometry = new STLLoader().parse(buf);
+        } else if (lower.endsWith('.obj')) {
+          const text = new TextDecoder().decode(buf);
+          const obj = new OBJLoader().parse(text);
+          obj.updateMatrixWorld(true);
+          geometry = geometryFromObject(obj);
+        } else {
+          throw new Error('只支援 .stl 同 .obj');
+        }
+        if (originalGeometry) originalGeometry.dispose();
+        originalGeometry = geometry.clone();
+        showMesh(geometry, name);
+        setStatus(`已載入：${name}`);
+      } catch (err) {
+        console.error(err);
+        setStatus('載入失敗：' + (err.message || err), true);
+      }
+    }
+
+    // --- Tools ---
+    function centerOrigin() {
+      if (!mesh) return;
+      const geo = mesh.geometry;
+      geo.computeBoundingBox();
+      const b = geo.boundingBox;
+      const cx = (b.min.x + b.max.x) / 2;
+      const cy = (b.min.y + b.max.y) / 2;
+      const cz = (b.min.z + b.max.z) / 2;
+      geo.translate(-cx, -cy, -cz);
+      geo.computeBoundingBox();
+      geo.computeBoundingSphere();
+      updateStats();
+      fitCamera();
+      setStatus('已置中到原點 · Centered');
+    }
+
+    function layFlat() {
+      if (!mesh) return;
+      const geo = mesh.geometry;
+      // Align shortest bbox axis to Y (up), then sit on y=0
+      const { x, y, z } = bboxSize(geo);
+      const dims = [
+        { axis: 'x', len: x },
+        { axis: 'y', len: y },
+        { axis: 'z', len: z },
+      ].sort((a, b) => a.len - b.len);
+      const shortest = dims[0].axis;
+      // Rotate shortest → Y
+      if (shortest === 'x') {
+        geo.rotateZ(Math.PI / 2);
+      } else if (shortest === 'z') {
+        geo.rotateX(-Math.PI / 2);
+      }
+      // Now put min Y on ground
+      geo.computeBoundingBox();
+      const b = geo.boundingBox;
+      const cx = (b.min.x + b.max.x) / 2;
+      const cz = (b.min.z + b.max.z) / 2;
+      geo.translate(-cx, -b.min.y, -cz);
+      geo.computeVertexNormals();
+      geo.computeBoundingBox();
+      geo.computeBoundingSphere();
+      updateStats();
+      fitCamera();
+      setStatus('已放平並貼地 · Laid flat');
+    }
+
+    function uniformScale() {
+      if (!mesh) return;
+      const target = parseFloat($('targetSize').value);
+      if (!target || target <= 0) {
+        setStatus('請輸入有效目標尺寸 (mm)', true);
+        return;
+      }
+      const geo = mesh.geometry;
+      const { x, y, z } = bboxSize(geo);
+      const maxDim = Math.max(x, y, z);
+      if (maxDim < 1e-9) {
+        setStatus('模型尺寸太細，唔能縮放', true);
+        return;
+      }
+      const s = target / maxDim;
+      geo.scale(s, s, s);
+      geo.computeBoundingBox();
+      geo.computeBoundingSphere();
+      updateStats();
+      fitCamera();
+      setStatus(`已縮放到最大邊 ${target} mm · Scaled`);
+    }
+
+    function recomputeNormals() {
+      if (!mesh) return;
+      mesh.geometry.computeVertexNormals();
+      setStatus('已重算法線 · Normals recomputed');
+    }
+
+    function softRepair() {
+      if (!mesh) return;
+      let geo = mesh.geometry;
+      const pos = geo.getAttribute('position');
+      const keep = [];
+      const epsArea = 1e-12;
+      const a = new THREE.Vector3();
+      const b = new THREE.Vector3();
+      const c = new THREE.Vector3();
+      const ab = new THREE.Vector3();
+      const ac = new THREE.Vector3();
+      let dropped = 0;
+      for (let i = 0; i < pos.count; i += 3) {
+        a.fromBufferAttribute(pos, i);
+        b.fromBufferAttribute(pos, i + 1);
+        c.fromBufferAttribute(pos, i + 2);
+        ab.subVectors(b, a);
+        ac.subVectors(c, a);
+        const area2 = ab.cross(ac).lengthSq();
+        if (area2 > epsArea) {
+          keep.push(a.x, a.y, a.z, b.x, b.y, b.z, c.x, c.y, c.z);
+        } else {
+          dropped++;
+        }
+      }
+      let next = new THREE.BufferGeometry();
+      next.setAttribute('position', new THREE.Float32BufferAttribute(keep, 3));
+      // Weld close vertices
+      const before = next.getAttribute('position').count;
+      try {
+        next = mergeVertices(next, 1e-4);
+      } catch (e) {
+        console.warn('mergeVertices failed', e);
+      }
+      next = ensureNonIndexed(next);
+      next.computeVertexNormals();
+      next.computeBoundingBox();
+      next.computeBoundingSphere();
+      mesh.geometry.dispose();
+      mesh.geometry = next;
+      const after = next.getAttribute('position').count;
+      updateStats();
+      fitCamera();
+      setStatus(`軟修復：丟掉 ${dropped} 個零面積三角；頂點 ${before} → ${after}`);
+    }
+
+    function downloadSTL() {
+      if (!mesh) return;
+      const exporter = new STLExporter();
+      // Binary STL as ArrayBuffer
+      const result = exporter.parse(mesh, { binary: true });
+      const blob = new Blob([result], { type: 'application/octet-stream' });
+      const base = fileName.replace(/\.(stl|obj)$/i, '') || 'model';
+      const outName = base + '_cleaned.stl';
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = outName;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        URL.revokeObjectURL(a.href);
+        a.remove();
+      }, 1500);
+      setStatus(`已下載：${outName}`);
+    }
+
+    function resetOriginal() {
+      if (!originalGeometry) return;
+      showMesh(originalGeometry.clone(), fileName);
+      setStatus('已還原到上載時原檔 · Reset');
+    }
+
+    // --- Events ---
+    dropZone.addEventListener('click', () => fileInput.click());
+    dropZone.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); }
+    });
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files[0]) loadFile(fileInput.files[0]);
+      fileInput.value = '';
+    });
+    ['dragenter','dragover'].forEach((ev) => {
+      dropZone.addEventListener(ev, (e) => {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+      });
+    });
+    ['dragleave','drop'].forEach((ev) => {
+      dropZone.addEventListener(ev, (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+      });
+    });
+    dropZone.addEventListener('drop', (e) => {
+      const f = e.dataTransfer.files[0];
+      if (f) loadFile(f);
+    });
+    // Also allow drop on viewport
+    canvas.addEventListener('dragover', (e) => e.preventDefault());
+    canvas.addEventListener('drop', (e) => {
+      e.preventDefault();
+      const f = e.dataTransfer.files[0];
+      if (f) loadFile(f);
+    });
+
+    $('btnCenter').addEventListener('click', centerOrigin);
+    $('btnFlat').addEventListener('click', layFlat);
+    $('btnScale').addEventListener('click', uniformScale);
+    $('btnNormals').addEventListener('click', recomputeNormals);
+    $('btnRepair').addEventListener('click', softRepair);
+    $('btnDownload').addEventListener('click', downloadSTL);
+    $('btnReset').addEventListener('click', resetOriginal);
+    $('btnFit').addEventListener('click', fitCamera);
+    $('btnGrid').addEventListener('click', () => {
+      showGrid = !showGrid;
+      grid.visible = showGrid;
+      axes.visible = showGrid;
+    });
+
+    setEnabled(false);
+    setStatus('等待上載… Ready');
+  </script>
+</body>
+</html>
