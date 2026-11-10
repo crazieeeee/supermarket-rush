@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <title>Christmas Podcast · Night Walk under Christmas Lights</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23070b14'/%3E%3Cpath d='M16 4l2.4 7.2H26l-6 4.4 2.3 7.2L16 18.8 9.7 22.8 12 15.6 6 11.2h7.6z' fill='%23f3d19a'/%3E%3C/svg%3E">
+  <style>
+    @font-face {
+      font-family: "Playfair Display";
+      font-style: normal;
+      font-weight: 500 700;
+      font-display: swap;
+      src: url("assets/fonts/playfair-latin.woff2") format("woff2");
+      unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122;
+    }
+    @font-face {
+      font-family: "Playfair Display";
+      font-style: normal;
+      font-weight: 500 700;
+      font-display: swap;
+      src: url("assets/fonts/playfair-latin-ext.woff2") format("woff2");
+      unicode-range: U+0100-02BA, U+1E00-1EFF;
+    }
+    @font-face {
+      font-family: "Source Sans 3";
+      font-style: normal;
+      font-weight: 400 700;
+      font-display: swap;
+      src: url("assets/fonts/source-sans-latin.woff2") format("woff2");
+      unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122;
+    }
+    @font-face {
+      font-family: "Source Sans 3";
+      font-style: normal;
+      font-weight: 400 700;
+      font-display: swap;
+      src: url("assets/fonts/source-sans-latin-ext.woff2") format("woff2");
+      unicode-range: U+0100-02BA, U+1E00-1EFF;
+    }
+    @font-face {
+      font-family: "Source Sans 3";
+      font-style: italic;
+      font-weight: 400;
+      font-display: swap;
+      src: url("assets/fonts/source-sans-italic-latin.woff2") format("woff2");
+      unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122;
+    }
+    @font-face {
+      font-family: "Source Sans 3";
+      font-style: italic;
+      font-weight: 400;
+      font-display: swap;
+      src: url("assets/fonts/source-sans-italic-latin-ext.woff2") format("woff2");
+      unicode-range: U+0100-02BA, U+1E00-1EFF;
+    }
+
+    :root {
+      --ink: #f7f3ea;
+      --muted: rgba(247, 243, 234, 0.78);
+      --gold: #f3d19a;
+      --gold-deep: #e8b86d;
+      --night: #070b14;
+      --chip: rgba(255, 255, 255, 0.1);
+      --chip-line: rgba(255, 255, 255, 0.22);
+      --safe-top: max(18px, env(safe-area-inset-top));
+      --safe-bottom: max(16px, env(safe-area-inset-bottom));
+      --safe-left: max(28px, env(safe-area-inset-left));
+      --safe-right: max(28px, env(safe-area-inset-right));
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; background: var(--night); color: var(--ink); }
+    body {
+      font-family: "Source Sans 3", "Segoe UI", sans-serif;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+    button { font-family: inherit; color: inherit; cursor: pointer; background: none; border: 0; }
+    button:focus-visible, [contenteditable]:focus-visible, .menu-item:focus-visible {
+      outline: 2px solid var(--gold);
+      outline-offset: 3px;
+    }
+
+    .stage { position: relative; width: 100%; height: 100%; overflow: hidden; }
+
+    .bg {
+      position: absolute;
+      inset: -5%;
+      background: var(--night) center / cover no-repeat;
+      opacity: 0;
+      transition: opacity 0.95s ease;
+      will-change: opacity, transform;
+    }
+    .bg.on { opacity: 1; }
+    .bg.ken { animation: ken 24s ease-in-out infinite alternate; }
+    .bg.ken.flip { animation-name: kenFlip; }
+    @keyframes ken {
+      from { transform: scale(1.02) translate3d(0, 0, 0); }
+      to { transform: scale(1.1) translate3d(-1.6%, -1.1%, 0); }
+    }
+    @keyframes kenFlip {
+      from { transform: scale(-1.02, 1.02) translate3d(0, 0, 0); }
+      to { transform: scale(-1.1, 1.1) translate3d(1.6%, -1.1%, 0); }
+    }
+
+    .vignette {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(90deg, rgba(7, 11, 20, 0.82) 0%, rgba(7, 11, 20, 0.5) 34%, rgba(7, 11, 20, 0.18) 56%, transparent 74%),
+        linear-gradient(0deg, rgba(7, 11, 20, 0.88) 0%, rgba(7, 11, 20, 0.48) 26%, rgba(7, 11, 20, 0.12) 52%, transparent 70%),
+        linear-gradient(180deg, rgba(7, 11, 20, 0.35) 0%, transparent 18%);
+      z-index: 1;
+    }
+
+    .bokeh, .garland { position: absolute; inset: 0; pointer-events: none; z-index: 2; overflow: hidden; }
+    .dot {
+      position: absolute;
+      border-radius: 50%;
+      background: radial-gradient(circle, #fff 0%, var(--c, #f3d19a) 38%, transparent 70%);
+      width: var(--s, 10px);
+      height: var(--s, 10px);
+      left: var(--x); top: var(--y);
+      opacity: 0.55;
+      filter: blur(0.4px);
+      animation: twinkle var(--t, 3.4s) ease-in-out infinite alternate;
+      animation-delay: var(--d, 0s);
+    }
+    @keyframes twinkle { from { opacity: 0.2; transform: scale(0.85); } to { opacity: 0.8; transform: scale(1.15); } }
+
+    .garland svg { width: 100%; height: 46px; display: block; opacity: 0.9; }
+
+    .topbar, .copy, .bar, .side, .menu, .loader { z-index: 4; }
+
+    .topbar {
+      position: absolute;
+      top: var(--safe-top);
+      left: var(--safe-left);
+      right: var(--safe-right);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      pointer-events: none;
+    }
+    .brand {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      pointer-events: none;
+    }
+    .brand strong {
+      font-weight: 600;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      font-size: 0.72rem;
+      color: rgba(247, 243, 234, 0.86);
+    }
+    .brand span {
+      font-size: 0.78rem;
+      color: rgba(247, 243, 234, 0.58);
+    }
+    .menu-btn {
+      pointer-events: auto;
+      border: 1px solid rgba(255,255,255,0.22);
+      background: rgba(7, 11, 20, 0.28);
+      backdrop-filter: blur(10px);
+      border-radius: 999px;
+      padding: 0.48rem 0.95rem;
+      font-size: 0.9rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .menu-btn:hover { border-color: rgba(243, 209, 154, 0.7); color: var(--gold); }
+
+    .copy {
+      position: absolute;
+      left: max(124px, calc(var(--safe-left) + 80px));
+      bottom: calc(92px + var(--safe-bottom));
+      width: min(680px, calc(52vw - 12px));
+      max-height: calc(100vh - 200px);
+      overflow: auto;
+    }
+    .page { display: none; }
+    .page.active { display: block; animation: rise 0.7s ease both; }
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: none; }
+    }
+
+    .kicker {
+      font-size: 0.82rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 0.7rem;
+      font-weight: 600;
+    }
+    .title {
+      font-family: "Playfair Display", Georgia, "Times New Roman", serif;
+      font-weight: 600;
+      font-size: clamp(2.35rem, 5.1vw, 4.55rem);
+      line-height: 1.12;
+      letter-spacing: -0.02em;
+      color: #fff8ee;
+      text-shadow: 0 2px 18px rgba(0,0,0,0.85), 0 10px 40px rgba(0,0,0,0.5);
+      margin-bottom: 1rem;
+    }
+    .listen {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      color: rgba(247, 243, 234, 0.62);
+      font-size: 0.78rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      margin-bottom: 0.45rem;
+    }
+    .listen i {
+      display: inline-block;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #e25b5b;
+      box-shadow: 0 0 10px #e25b5b;
+    }
+    .narration {
+      font-size: clamp(1.15rem, 2.05vw, 1.62rem);
+      line-height: 1.45;
+      color: var(--muted);
+      text-shadow: 0 2px 14px rgba(0,0,0,0.75);
+      max-width: 36ch;
+      margin-bottom: 1.15rem;
+    }
+    .chips { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.15rem; }
+    .chip {
+      border: 1px solid var(--chip-line);
+      background: var(--chip);
+      backdrop-filter: blur(8px);
+      border-radius: 999px;
+      padding: 0.38rem 0.85rem;
+      font-size: clamp(0.95rem, 1.45vw, 1.18rem);
+      color: var(--ink);
+    }
+    .say {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 0.55rem 0.8rem;
+      padding-left: 0.85rem;
+      border-left: 2px solid var(--gold-deep);
+    }
+    .say b {
+      font-size: 0.74rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--gold);
+      font-weight: 700;
+    }
+    .say q {
+      quotes: "“" "”";
+      font-size: clamp(1.15rem, 2vw, 1.55rem);
+      font-style: italic;
+      line-height: 1.35;
+    }
+    .say q::before { content: open-quote; }
+    .say q::after { content: close-quote; }
+
+    .prompts { display: grid; gap: 0.65rem; margin: 0.2rem 0 1.1rem; }
+    .prompt {
+      border: 1px solid rgba(255,255,255,0.18);
+      background: rgba(10, 14, 24, 0.42);
+      backdrop-filter: blur(12px);
+      border-radius: 16px;
+      padding: 0.85rem 1.05rem;
+      font-size: clamp(1.15rem, 2vw, 1.45rem);
+      text-align: left;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .prompt:hover, .prompt.is-on {
+      border-color: rgba(243, 209, 154, 0.75);
+      background: rgba(20, 24, 36, 0.55);
+    }
+
+    .message {
+      border: 1px solid rgba(255,255,255,0.18);
+      background: rgba(10, 14, 24, 0.48);
+      backdrop-filter: blur(12px);
+      border-radius: 18px;
+      padding: 1.1rem 1.2rem 1.2rem;
+      font-size: clamp(1.2rem, 2.15vw, 1.62rem);
+      line-height: 1.55;
+      max-width: 36ch;
+      margin-bottom: 1.1rem;
+    }
+    .blank {
+      display: inline-block;
+      min-width: 5.5ch;
+      border-bottom: 2px solid var(--gold);
+      padding: 0 0.25rem;
+      color: var(--gold);
+      outline: none;
+    }
+
+    .quiz { display: grid; gap: 0.7rem; margin: 0.15rem 0 0.3rem; }
+    .q {
+      border: 1px solid rgba(255,255,255,0.16);
+      background: rgba(10, 14, 24, 0.46);
+      backdrop-filter: blur(12px);
+      border-radius: 16px;
+      padding: 0.75rem 0.9rem 0.85rem;
+    }
+    .q p {
+      font-size: clamp(1.05rem, 1.8vw, 1.32rem);
+      margin-bottom: 0.55rem;
+    }
+    .choices { display: flex; flex-wrap: wrap; gap: 0.45rem; align-items: center; }
+    .choice {
+      border: 1px solid rgba(255,255,255,0.24);
+      background: rgba(255,255,255,0.08);
+      border-radius: 999px;
+      padding: 0.35rem 0.95rem;
+      font-size: 1.05rem;
+    }
+    .choice:hover { border-color: var(--gold); }
+    .choice.good {
+      background: rgba(64, 140, 96, 0.35);
+      border-color: #8ad0a4;
+    }
+    .choice.bad {
+      background: rgba(160, 96, 48, 0.3);
+      border-color: #e0b07a;
+    }
+    .fb {
+      margin-left: 0.35rem;
+      font-size: 0.95rem;
+      color: rgba(247, 243, 234, 0.8);
+    }
+    .quiz-done {
+      margin-top: 0.35rem;
+      color: var(--gold);
+      font-size: 1.1rem;
+      min-height: 1.4em;
+    }
+
+    .side {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.22);
+      background: rgba(7, 11, 20, 0.32);
+      backdrop-filter: blur(10px);
+      font-size: 1.35rem;
+      display: grid;
+      place-items: center;
+    }
+    .side:hover { border-color: var(--gold); color: var(--gold); }
+    .side[disabled] { opacity: 0.25; cursor: default; }
+    .side.prev { left: var(--safe-left); }
+    .side.next { right: var(--safe-right); }
+
+    .bar {
+      position: absolute;
+      left: var(--safe-left);
+      right: var(--safe-right);
+      bottom: var(--safe-bottom);
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 1rem;
+      padding-bottom: 6px;
+    }
+    .indicator {
+      font-size: 0.95rem;
+      letter-spacing: 0.08em;
+      color: rgba(247, 243, 234, 0.8);
+      white-space: nowrap;
+    }
+    .dots { display: flex; justify-content: center; gap: 6px; flex-wrap: wrap; }
+    .dots button {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.32);
+    }
+    .dots button.on {
+      background: var(--gold);
+      box-shadow: 0 0 10px rgba(243, 209, 154, 0.8);
+      transform: scale(1.25);
+    }
+    .next-cta {
+      border: 1px solid rgba(255,255,255,0.24);
+      background: rgba(7, 11, 20, 0.28);
+      backdrop-filter: blur(10px);
+      border-radius: 999px;
+      padding: 0.55rem 1.05rem;
+      font-size: 1rem;
+      white-space: nowrap;
+    }
+    .next-cta:hover { border-color: var(--gold); color: var(--gold); }
+    .next-cta[disabled] { opacity: 0.3; cursor: default; }
+
+    .menu {
+      position: absolute;
+      inset: 0;
+      background: rgba(6, 9, 16, 0.62);
+      backdrop-filter: blur(16px);
+      display: none;
+      padding: clamp(24px, 6vh, 64px) var(--safe-left) 40px;
+    }
+    .menu.open { display: block; }
+    .menu h2 {
+      font-family: "Playfair Display", Georgia, serif;
+      font-size: clamp(1.8rem, 3vw, 2.6rem);
+      margin: 0.4rem 0 0.35rem;
+    }
+    .menu .lead { color: var(--muted); margin-bottom: 1.3rem; }
+    .menu-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 0.55rem;
+      max-width: 1100px;
+    }
+    .menu-item {
+      display: flex;
+      gap: 0.75rem;
+      align-items: baseline;
+      text-align: left;
+      padding: 0.7rem 0.85rem;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.04);
+    }
+    .menu-item:hover, .menu-item.here {
+      border-color: rgba(243, 209, 154, 0.65);
+      background: rgba(243, 209, 154, 0.08);
+    }
+    .menu-item em {
+      font-style: normal;
+      color: var(--gold);
+      min-width: 1.6em;
+      font-variant-numeric: tabular-nums;
+    }
+    .menu-foot {
+      margin-top: 1.4rem;
+      color: rgba(247, 243, 234, 0.5);
+      font-size: 0.92rem;
+    }
+
+    .loader {
+      position: absolute;
+      inset: 0;
+      background: var(--night);
+      display: grid;
+      place-items: center;
+      z-index: 8;
+      transition: opacity 0.6s ease;
+    }
+    .loader.hide { opacity: 0; pointer-events: none; }
+    .loader-inner { text-align: center; }
+    .orb {
+      width: 18px; height: 18px; margin: 0 auto 1rem;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #fff, var(--gold) 45%, #c23b3b);
+      box-shadow: 0 0 24px rgba(243, 209, 154, 0.85);
+      animation: pulse 1.4s ease-in-out infinite;
+    }
+    @keyframes pulse { 50% { transform: scale(1.25); opacity: 0.75; } }
+    .loader p {
+      font-family: "Playfair Display", Georgia, serif;
+      font-size: 1.35rem;
+    }
+    .loader span { display: block; margin-top: 0.4rem; color: rgba(247,243,234,0.55); font-size: 0.92rem; }
+
+    @media (max-width: 860px) {
+      .copy { left: var(--safe-left); width: min(92vw, 640px); }
+      .side { display: none; }
+      .title { font-size: clamp(2rem, 8vw, 3.2rem); }
+    }
+    @media (max-height: 820px) {
+      .title { font-size: clamp(1.7rem, 4.5vw, 2.75rem); }
+      .narration { margin-bottom: 0.65rem; font-size: clamp(1.05rem, 1.85vw, 1.38rem); }
+      .copy {
+        left: var(--safe-left);
+        top: 78px;
+        bottom: calc(76px + var(--safe-bottom));
+        max-height: none;
+        width: min(680px, 58vw);
+      }
+      .side { display: none; }
+      .q { padding: 0.52rem 0.8rem 0.58rem; }
+      .quiz { gap: 0.48rem; }
+      .prompts { gap: 0.5rem; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .bg.ken, .bg.ken.flip, .dot, .page.active, .orb { animation: none !important; }
+      .bg { transition: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <div class="bg ken" id="bgA"></div>
+    <div class="bg ken" id="bgB"></div>
+    <div class="vignette"></div>
+    <div class="bokeh" id="bokeh" aria-hidden="true"></div>
+    <div class="garland" aria-hidden="true">
+      <svg viewBox="0 0 1400 46" preserveAspectRatio="none">
+        <path d="M0 18 C 180 38, 280 6, 420 22 S 700 40, 860 16 S 1180 36, 1400 14" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="1.2"/>
+        <g id="bulbs"></g>
+      </svg>
+    </div>
+
+    <header class="topbar">
+      <div class="brand">
+        <strong>Christmas Podcast</strong>
+        <span>Night Walk under Christmas Lights</span>
+      </div>
+      <button class="menu-btn" id="menuBtn" type="button">Menu</button>
+    </header>
+
+    <div class="copy" id="copy">
+
+      <article class="page" data-bg="assets/bg/bg-01-opening.jpg" data-flip="0">
+        <p class="kicker">Opening</p>
+        <h1 class="title">Welcome to our<br>Christmas Podcast</h1>
+        <p class="listen"><i></i> Welcome</p>
+        <p class="narration">Hello, everyone! Welcome to our Christmas podcast.</p>
+        <div class="chips">
+          <span class="chip">podcast</span><span class="chip">Christmas</span><span class="chip">welcome</span>
+        </div>
+        <p class="say"><b>Say it</b><q>Welcome to our Christmas podcast.</q></p>
+      </article>
+
+      <article class="page" data-bg="assets/bg/bg-02-show.jpg" data-flip="0">
+        <p class="kicker">Today’s show</p>
+        <h1 class="title">What will we<br>talk about?</h1>
+        <p class="listen"><i></i> Today we talk about</p>
+        <p class="narration">Today we talk about Christmas words, fun things and wishes.</p>
+        <div class="chips">
+          <span class="chip">talk about</span><span class="chip">words</span><span class="chip">fun</span><span class="chip">wishes</span>
+        </div>
+        <p class="say"><b>Say it</b><q>Today we talk about Christmas words.</q></p>
+      </article>
+
+      <article class="page" data-bg="assets/bg/bg-03-special.jpg" data-flip="0">
+        <p class="kicker">What is Christmas?</p>
+        <h1 class="title">A special day</h1>
+        <p class="listen"><i></i> Let’s listen</p>
+        <p class="narration">Christmas is a special day in December.</p>
+        <div class="chips">
+          <span class="chip">special</span><span class="chip">December</span><span class="chip">family</span><span class="chip">friends</span><span class="chip">happy</span>
+        </div>
+        <p class="say"><b>Say it</b><q>Christmas is a special day.</q></p>
+      </article>
+
+      <article class="page" data-bg="assets/bg/bg-04-origin.jpg" data-flip="0">
+        <p class="kicker">The origin of Christmas</p>
+        <h1 class="title">Why we celebrate</h1>
+        <p class="listen"><i></i> Let’s listen</p>
+        <p class="narration">Long ago, Jesus was born. People celebrate Christmas in December.</p>
+        <div class="chips">
+          <span class="chip">origin</span><span class="chip">celebrate</span><span class="chip">Jesus</span><span class="chip">born</span><span class="chip">long ago</span><span class="chip">December</span>
+        </div>
+        <p class="say"><b>Say it</b><q>People celebrate Christmas in December.</q></p>
+      </article>
+
+      <article class="page" data-bg="assets/bg/bg-05-tree.jpg" data-flip="1">
+        <p class="kicker">Christmas words (1)</p>
+        <h1 class="title">Tree and lights</h1>
+        <p class="listen"><i></i> Let’s listen</p>
+        <p class="narration">Look! There is a Christmas tree. There are many lights.</p>
+        <div class="chips">
+          <span class="chip">Christmas tree</span><span class="chip">lights</span><span class="chip">star</span><span class="chip">bright</span>
+        </div>
+        <p class="say"><b>Say it</b><q>There is a Christmas tree.</q></p>
+      </article>
+
+      <article class="page" data-bg="assets/bg/bg-06-presents.jpg" data-flip="0">
+        <p class="kicker">Christmas words (2)</p>
+        <h1 class="title">Presents and<br>stockings</h1>
+        <p class="listen"><i></i> Let’s listen</p>
+        <p class="narration">Children get presents. Stockings are red.</p>
+        <div class="chips">
+          <span class="chip">present</span><span class="chip">gift</span><span class="chip">stocking</span><span class="chip">open</span><span class="chip">wrap</span>
+        </div>
+        <p class="say"><b>Say it</b><q>Children get presents.</q></p>
+      </article>
+
+      <article class="page" data-bg="assets/bg/bg-07-food.jpg" data-flip="0">
+        <p class="kicker">Christmas words (3)</p>
+        <h1 class="title">Food we like</h1>
+        <p class="listen"><i></i> Let’s listen</p>
+        <p class="narration">I like Christmas cake. There are some cookies too.</p>
+        <div class="chips">
+          <span class="chip">cake</span><span class="chip">cookies</span><span class="chip">turkey</span><span class="chip">juice</span><span class="chip">delicious</span>
+        </div>
+        <p class="say"><b>Say it</b><q>I like Christmas cake.</q></p>
+      </article>
+
+      <article class="page" data-bg="assets/bg/bg-08-fun.jpg" data-flip="0">
+        <p class="kicker">Fun at Christmas</p>
+        <h1 class="title">What can we do?</h1>
+        <p class="listen"><i></i> Let’s listen</p>
+        <p class="narration">We can sing songs. We can give presents. Let’s decorate the tree!</p>
+        <div class="chips">
+          <span class="chip">sing</span><span class="chip">give</span><span class="chip">decorate</span><span class="chip">dance</span><span class="chip">make a card</span>
+        </div>
+        <p class="say"><b>Say it</b><q>Let’s decorate the tree!</q></p>
+      </article>
+
+      <article class="page" data-bg="assets/bg/bg-09-santa.jpg" data-flip="0">
+        <p class="kicker">People and stories</p>
+        <h1 class="title">Santa and friends</h1>
+        <p class="listen"><i></i> Let’s listen</p>
+        <p class="narration">Some stories talk about Santa and reindeer.</p>
+        <div class="chips">
+          <span class="chip">Santa</span><span class="chip">reindeer</span><span class="chip">sleigh</span><span class="chip">story</span>
+        </div>
+        <p class="say"><b>Say it</b><q>Some stories talk about Santa.</q></p>
+      </article>
+
+      <article class="page" data-bg="assets/bg/bg-10-colours.jpg" data-flip="0">
+        <p class="kicker">Clothes and colours</p>
+        <h1 class="title">Red, green<br>and gold</h1>
+        <p class="listen"><i></i> Let’s listen</p>
+        <p class="narration">People wear red hats. Green and gold are Christmas colours.</p>
+        <div class="chips">
+          <span class="chip">red</span><span class="chip">green</span><span class="chip">gold</span><span class="chip">hat</span><span class="chip">scarf</span><span class="chip">jumper</span>
+        </div>
+        <p class="say"><b>Say it</b><q>People wear red hats.</q></p>
+      </article>
+
+      <article class="page" data-bg="assets/bg/bg-11-wishes.jpg" data-flip="0">
+        <p class="kicker">Christmas wishes</p>
+        <h1 class="title">Kind words</h1>
+        <p class="listen"><i></i> Let’s listen</p>
+        <p class="narration">We say “Merry Christmas!” and “Happy New Year!”</p>
+        <div class="chips">
+          <span class="chip">Merry Christmas</span><span class="chip">Happy New Year</span><span class="chip">best wishes</span><span class="chip">thank you</span>
+        </div>
+        <p class="say"><b>Say it</b><q>Merry Christmas!</q></p>
+      </article>
+
+      <article class="page" data-bg="assets/bg/bg-12-yourturn.jpg" data-flip="0">
+        <p class="kicker">Your turn</p>
+        <h1 class="title">Talk about you</h1>
+        <p class="listen"><i></i> Your turn</p>
+        <p class="narration">Now it is your turn. Talk about you!</p>
+        <div class="prompts" id="prompts">
+          <button class="prompt" type="button">My favourite Christmas food is…</button>
+          <button class="prompt" type="button">I like…</button>
+          <button class="prompt" type="button">I want…</button>
+        </div>
+        <p class="say"><b>Say it</b><q>My favourite Christmas food is…</q></p>
+      </article>
+
+      <article class="page" data-bg="assets/bg/bg-13-message.jpg" data-flip="0">
+        <p class="kicker">Make a short message</p>
+        <h1 class="title">Podcast listener<br>message</h1>
+        <p class="listen"><i></i> Let’s speak</p>
+        <p class="narration">Let’s make a short message for our listeners.</p>
+        <p class="message">Hi! My name is <span class="blank" contenteditable="true" spellcheck="false" role="textbox" aria-label="Your name"></span>.<br>Merry Christmas! I like <span class="blank" contenteditable="true" spellcheck="false" role="textbox" aria-label="Something you like"></span>.</p>
+        <p class="say"><b>Say it</b><q>Hi! My name is ___. Merry Christmas!</q></p>
+      </article>
+
+      <article class="page" data-bg="assets/bg/bg-14-check.jpg" data-flip="0">
+        <p class="kicker">Quick check</p>
+        <h1 class="title">Listen and choose</h1>
+        <p class="listen"><i></i> Listen and choose</p>
+        <p class="narration">Choose the right word.</p>
+        <div class="quiz" id="quiz">
+          <div class="q" data-answer="is">
+            <p>There ___ a star.</p>
+            <div class="choices">
+              <button class="choice" type="button" data-choice="is">is</button>
+              <button class="choice" type="button" data-choice="are">are</button>
+              <span class="fb"></span>
+            </div>
+          </div>
+          <div class="q" data-answer="of">
+            <p>photos ___ the tree</p>
+            <div class="choices">
+              <button class="choice" type="button" data-choice="of">of</button>
+              <button class="choice" type="button" data-choice="for">for</button>
+              <span class="fb"></span>
+            </div>
+          </div>
+          <div class="q" data-answer="red">
+            <p>Stockings are ___.</p>
+            <div class="choices">
+              <button class="choice" type="button" data-choice="red">red</button>
+              <button class="choice" type="button" data-choice="blue">blue</button>
+              <span class="fb"></span>
+            </div>
+          </div>
+          <div class="q" data-answer="Merry">
+            <p>We say “___ Christmas!”</p>
+            <div class="choices">
+              <button class="choice" type="button" data-choice="Merry">Merry</button>
+              <button class="choice" type="button" data-choice="Happy">Happy</button>
+              <span class="fb"></span>
+            </div>
+          </div>
+        </div>
+        <p class="quiz-done" id="quizDone" aria-live="polite"></p>
+      </article>
+
+      <article class="page" data-bg="assets/bg/bg-15-closing.jpg" data-flip="0">
+        <p class="kicker">Closing</p>
+        <h1 class="title">Goodbye and<br>Merry Christmas</h1>
+        <p class="listen"><i></i> Goodbye</p>
+        <p class="narration">That’s all for today’s podcast. Merry Christmas, everyone! See you next time!</p>
+        <div class="chips">
+          <span class="chip">goodbye</span><span class="chip">next time</span><span class="chip">see you</span>
+        </div>
+        <p class="say"><b>Say it</b><q>Merry Christmas, everyone!</q></p>
+      </article>
+    </div>
+
+    <button class="side prev" id="prevSide" type="button" aria-label="Previous corner">‹</button>
+    <button class="side next" id="nextSide" type="button" aria-label="Next corner">›</button>
+
+    <footer class="bar">
+      <div class="indicator" id="indicator" aria-live="polite">1 / 15</div>
+      <div class="dots" id="dots"></div>
+      <button class="next-cta" id="nextCta" type="button">Next corner →</button>
+    </footer>
+
+    <aside class="menu" id="menu" hidden>
+      <p class="kicker">Night Walk</p>
+      <h2>Choose a corner</h2>
+      <p class="lead">Walk under the Christmas lights — fifteen short stops.</p>
+      <div class="menu-grid" id="menuGrid"></div>
+      <p class="menu-foot">A Christmas podcast with Mr Chan · P4 English · Use ← → to walk, Home and End to jump.</p>
+    </aside>
+
+    <div class="loader" id="loader">
+      <div class="loader-inner">
+        <div class="orb"></div>
+        <p>Night Walk under Christmas Lights</p>
+        <span>Christmas Podcast · Mr Chan</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const pages = Array.from(document.querySelectorAll(".page"));
+      const total = pages.length;
+      const bgA = document.getElementById("bgA");
+      const bgB = document.getElementById("bgB");
+      const indicator = document.getElementById("indicator");
+      const dotsBox = document.getElementById("dots");
+      const menu = document.getElementById("menu");
+      const menuBtn = document.getElementById("menuBtn");
+      const menuGrid = document.getElementById("menuGrid");
+      const nextCta = document.getElementById("nextCta");
+      const prevSide = document.getElementById("prevSide");
+      const nextSide = document.getElementById("nextSide");
+      const loader = document.getElementById("loader");
+      const titles = pages.map(function (p) {
+        return p.querySelector(".kicker").textContent.trim();
+      });
+
+      let index = 0;
+      let front = bgA;
+      let back = bgB;
+
+      pages.forEach(function (_, i) {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.setAttribute("aria-label", "Go to page " + (i + 1));
+        b.addEventListener("click", function () { go(i); });
+        dotsBox.appendChild(b);
+
+        const item = document.createElement("button");
+        item.type = "button";
+        item.className = "menu-item";
+        item.innerHTML = "<em>" + (i + 1) + "</em><span>" + titles[i] + "</span>";
+        item.addEventListener("click", function () { go(i); closeMenu(); });
+        menuGrid.appendChild(item);
+      });
+
+      function setBg(el, page) {
+        el.style.backgroundImage = 'url("' + page.dataset.bg + '")';
+        el.classList.toggle("flip", page.dataset.flip === "1");
+      }
+
+      function render(initial) {
+        pages.forEach(function (p, i) { p.classList.toggle("active", i === index); });
+        indicator.textContent = (index + 1) + " / " + total;
+        Array.from(dotsBox.children).forEach(function (d, i) { d.classList.toggle("on", i === index); });
+        Array.from(menuGrid.children).forEach(function (d, i) { d.classList.toggle("here", i === index); });
+        prevSide.disabled = index === 0;
+        nextSide.disabled = index === total - 1;
+        nextCta.disabled = index === total - 1;
+        nextCta.textContent = index === total - 1 ? "The last corner" : "Next corner →";
+        if (location.hash !== "#" + (index + 1)) {
+          try { history.replaceState(null, "", "#" + (index + 1)); }
+          catch (err) { location.hash = (index + 1); }
+        }
+        if (!initial) {
+          const copy = document.getElementById("copy");
+          copy.scrollTop = 0;
+        }
+      }
+
+      function go(n) {
+        if (n < 0 || n >= total || n === index) {
+          render(true);
+          return;
+        }
+        index = n;
+        setBg(back, pages[index]);
+        back.classList.add("on");
+        front.classList.remove("on");
+        var tmp = front; front = back; back = tmp;
+        render(false);
+      }
+
+      function next() { go(Math.min(total - 1, index + 1)); }
+      function prev() { go(Math.max(0, index - 1)); }
+
+      function openMenu() {
+        menu.hidden = false;
+        menu.classList.add("open");
+        menuBtn.textContent = "Close";
+      }
+      function closeMenu() {
+        menu.classList.remove("open");
+        menu.hidden = true;
+        menuBtn.textContent = "Menu";
+      }
+      function toggleMenu() { menu.classList.contains("open") ? closeMenu() : openMenu(); }
+
+      menuBtn.addEventListener("click", toggleMenu);
+      prevSide.addEventListener("click", prev);
+      nextSide.addEventListener("click", next);
+      nextCta.addEventListener("click", next);
+
+      document.addEventListener("keydown", function (e) {
+        if (e.target && e.target.isContentEditable) return;
+        if (e.key === "Escape") { closeMenu(); return; }
+        if (e.key === "ArrowRight" || e.key === "PageDown") { e.preventDefault(); closeMenu(); next(); }
+        if (e.key === "ArrowLeft" || e.key === "PageUp") { e.preventDefault(); closeMenu(); prev(); }
+        if (e.key === "Home") { e.preventDefault(); closeMenu(); go(0); }
+        if (e.key === "End") { e.preventDefault(); closeMenu(); go(total - 1); }
+      });
+
+      let touchX = null;
+      document.addEventListener("touchstart", function (e) {
+        if (e.target.closest(".quiz, .message, .menu, .prompts")) return;
+        touchX = e.changedTouches[0].screenX;
+      }, { passive: true });
+      document.addEventListener("touchend", function (e) {
+        if (touchX === null) return;
+        const dx = e.changedTouches[0].screenX - touchX;
+        touchX = null;
+        if (Math.abs(dx) < 50) return;
+        dx < 0 ? next() : prev();
+      }, { passive: true });
+
+      document.getElementById("prompts").addEventListener("click", function (e) {
+        const btn = e.target.closest(".prompt");
+        if (!btn) return;
+        document.querySelectorAll(".prompt").forEach(function (p) { p.classList.toggle("is-on", p === btn); });
+      });
+
+      document.getElementById("quiz").addEventListener("click", function (e) {
+        const btn = e.target.closest(".choice");
+        if (!btn) return;
+        const q = btn.closest(".q");
+        if (q.dataset.locked === "1") return;
+        const ok = btn.dataset.choice === q.dataset.answer;
+        const fb = q.querySelector(".fb");
+        q.querySelectorAll(".choice").forEach(function (c) { c.classList.remove("good", "bad"); });
+        if (ok) {
+          btn.classList.add("good");
+          fb.textContent = "Yes! Well done.";
+          q.dataset.locked = "1";
+        } else {
+          btn.classList.add("bad");
+          fb.textContent = "Try again!";
+        }
+        const done = Array.from(document.querySelectorAll(".q")).every(function (item) { return item.dataset.locked === "1"; });
+        document.getElementById("quizDone").textContent = done ? "Great listening! You did it!" : "";
+      });
+
+      const colors = ["#f3d19a", "#e25b5b", "#8ad0a4", "#fff4d2", "#e8b86d", "#7ec8e3"];
+      const bokeh = document.getElementById("bokeh");
+      for (let i = 0; i < 16; i++) {
+        const d = document.createElement("span");
+        d.className = "dot";
+        d.style.setProperty("--x", (4 + Math.random() * 92) + "%");
+        d.style.setProperty("--y", (6 + Math.random() * 70) + "%");
+        d.style.setProperty("--s", (7 + Math.random() * 16) + "px");
+        d.style.setProperty("--c", colors[i % colors.length]);
+        d.style.setProperty("--t", (2.6 + Math.random() * 3.2) + "s");
+        d.style.setProperty("--d", (Math.random() * 2.4) + "s");
+        bokeh.appendChild(d);
+      }
+      const bulbs = document.getElementById("bulbs");
+      for (let i = 0; i < 22; i++) {
+        const x = 30 + i * 62;
+        const y = 10 + Math.sin(i * 0.9) * 8 + (i % 2 ? 6 : 0);
+        const c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        c.setAttribute("cx", x);
+        c.setAttribute("cy", y);
+        c.setAttribute("r", i % 5 === 0 ? 3.4 : 2.6);
+        c.setAttribute("fill", colors[i % colors.length]);
+        c.setAttribute("opacity", "0.85");
+        bulbs.appendChild(c);
+      }
+
+      function startFromHash() {
+        const n = parseInt((location.hash || "#1").slice(1), 10);
+        index = isFinite(n) && n >= 1 && n <= total ? n - 1 : 0;
+        setBg(front, pages[index]);
+        front.classList.add("on");
+        render(true);
+      }
+      window.addEventListener("hashchange", function () {
+        const n = parseInt((location.hash || "#1").slice(1), 10);
+        if (isFinite(n)) go(n - 1);
+      });
+
+      startFromHash();
+
+      function hideLoader() { loader.classList.add("hide"); }
+      const firstImg = new Image();
+      firstImg.onload = firstImg.onerror = hideLoader;
+      firstImg.src = pages[index].dataset.bg;
+      setTimeout(hideLoader, 1400);
+      pages.forEach(function (p) {
+        const img = new Image();
+        img.src = p.dataset.bg;
+      });
+    })();
+  </script>
+</body>
+</html>
