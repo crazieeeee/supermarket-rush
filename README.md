@@ -21,3 +21,7 @@ https://crazieeeee.github.io/supermarket-rush/cs-scanner/
 Light cleanup for phone-scanned STL/OBJ models (preview, center, lay flat, scale, download). Files stay in the browser.
 
 https://crazieeeee.github.io/supermarket-rush/stl-prep/
+
+## Christmas Podcast
+
+https://crazieeeee.github.io/supermarket-rush/christmas-podcast/
