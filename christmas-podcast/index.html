@@ -495,9 +495,161 @@
       .quiz { gap: 0.48rem; }
       .prompts { gap: 0.5rem; }
     }
+
+    .copy { transition: opacity 0.32s ease, transform 0.32s ease; }
+    .copy.away {
+      opacity: 0 !important;
+      transform: translateY(18px);
+      pointer-events: none;
+    }
+    .topbar, .bar, .side, .bokeh, .garland {
+      transition: opacity 0.28s ease;
+    }
+    .stage.walking .topbar,
+    .stage.walking .bar,
+    .stage.walking .side,
+    .stage.walking .bokeh,
+    .stage.walking .garland {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .bg.no-ken { animation: none !important; }
+    .bg.walk-out {
+      animation: walkOut 1.2s cubic-bezier(0.45, 0, 0.15, 1) forwards;
+    }
+    .bg.walk-back-out {
+      animation: walkBackOut 1.2s cubic-bezier(0.45, 0, 0.15, 1) forwards;
+    }
+    @keyframes walkOut {
+      0% { transform: scale(1.04) translate3d(0, 0, 0); filter: brightness(1); opacity: 1; }
+      50% { filter: brightness(0.55); opacity: 1; }
+      100% { transform: scale(1.9) translate3d(0, -2%, 0); filter: brightness(0.18); opacity: 0; }
+    }
+    @keyframes walkBackOut {
+      0% { transform: scale(1.04); filter: brightness(1); opacity: 1; }
+      100% { transform: scale(0.7); filter: brightness(0.35); opacity: 0; }
+    }
+
+    .tunnel {
+      position: absolute;
+      inset: 0;
+      z-index: 3;
+      pointer-events: none;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.22s ease, visibility 0s linear 0.22s;
+    }
+    .tunnel.on {
+      opacity: 1;
+      visibility: visible;
+      transition: opacity 0.25s ease 0.12s, visibility 0s linear 0s;
+    }
+    .tunnel.leaving {
+      opacity: 0;
+      transition: opacity 0.16s ease;
+    }
+    .tunnel-cam {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      perspective: 480px;
+      -webkit-perspective: 480px;
+      perspective-origin: 50% 48%;
+      background: #05060b;
+    }
+    .tunnel-space {
+      position: absolute;
+      inset: 0;
+      transform-style: preserve-3d;
+      -webkit-transform-style: preserve-3d;
+      transform: translateZ(0);
+    }
+    .tunnel.rush .tunnel-space {
+      animation: tunnelRush 1s cubic-bezier(0.42, 0, 0.18, 1) forwards;
+    }
+    @keyframes tunnelRush {
+      0% { transform: translateZ(0); }
+      100% { transform: translateZ(960px); }
+    }
+    .t-wall {
+      position: absolute;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+    }
+    .t-left, .t-right {
+      top: 0;
+      width: 960px;
+      height: 100%;
+      background-color: #0b0e16;
+      background-image:
+        radial-gradient(circle at 50% 16%, rgba(243,209,154,0.7) 0 3px, transparent 4px),
+        radial-gradient(circle at 50% 42%, rgba(226,91,91,0.65) 0 3px, transparent 4px),
+        radial-gradient(circle at 50% 68%, rgba(138,208,164,0.6) 0 3px, transparent 4px),
+        radial-gradient(circle at 50% 90%, rgba(126,200,227,0.55) 0 3px, transparent 4px),
+        linear-gradient(180deg, #171c28 0%, #080a11 100%);
+      background-size: 110px 100%, 110px 100%, 110px 100%, 110px 100%, 100% 100%;
+    }
+    .t-left {
+      left: 0;
+      transform: rotateY(90deg);
+      transform-origin: left center;
+    }
+    .t-right {
+      right: 0;
+      transform: rotateY(-90deg);
+      transform-origin: right center;
+    }
+    .t-floor {
+      left: 0;
+      bottom: 0;
+      width: 100%;
+      height: 960px;
+      transform: rotateX(90deg);
+      transform-origin: bottom center;
+      background:
+        linear-gradient(to top, rgba(243,209,154,0.18), transparent 30%),
+        linear-gradient(#1a1e28, #07080c);
+    }
+    .t-ceil {
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 960px;
+      transform: rotateX(-90deg);
+      transform-origin: top center;
+      background: linear-gradient(#0c0e14, #151922);
+    }
+    .t-portal {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      transform: translateZ(-960px);
+      background: #070b14 center / cover no-repeat;
+      box-shadow: 0 0 90px 28px rgba(243, 209, 154, 0.22);
+    }
+    .t-lights {
+      position: absolute;
+      inset: 0;
+      transform-style: preserve-3d;
+      -webkit-transform-style: preserve-3d;
+      pointer-events: none;
+    }
+    .t-bulb {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 9px;
+      height: 9px;
+      margin: -4.5px 0 0 -4.5px;
+      border-radius: 50%;
+      box-shadow: 0 0 14px 5px var(--glow, rgba(243,209,154,0.7));
+    }
     @media (prefers-reduced-motion: reduce) {
-      .bg.ken, .bg.ken.flip, .dot, .page.active, .orb { animation: none !important; }
+      .bg.ken, .bg.ken.flip, .dot, .page.active, .orb, .bg.walk-out, .bg.walk-back-out, .tunnel.rush .tunnel-space { animation: none !important; }
       .bg { transition: none; }
+      .copy, .topbar, .bar, .side, .bokeh, .garland, .tunnel { transition: none !important; }
     }
   </style>
 </head>
@@ -512,6 +664,19 @@
         <path d="M0 18 C 180 38, 280 6, 420 22 S 700 40, 860 16 S 1180 36, 1400 14" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="1.2"/>
         <g id="bulbs"></g>
       </svg>
+    </div>
+
+    <div class="tunnel" id="tunnel" aria-hidden="true">
+      <div class="tunnel-cam">
+        <div class="tunnel-space" id="tunnelSpace">
+          <div class="t-wall t-left"></div>
+          <div class="t-wall t-right"></div>
+          <div class="t-wall t-floor"></div>
+          <div class="t-wall t-ceil"></div>
+          <div class="t-lights" id="tunnelLights"></div>
+          <div class="t-portal" id="tunnelPortal"></div>
+        </div>
+      </div>
     </div>
 
     <header class="topbar">
@@ -809,17 +974,82 @@
         }
       }
 
+      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      let walking = false;
+      const WALK_MS = 1280;
+      const tunnel = document.getElementById("tunnel");
+      const portal = document.getElementById("tunnelPortal");
+      const stageEl = document.getElementById("stage");
+      const copyEl = document.getElementById("copy");
+
+      (function buildTunnelLights() {
+        const box = document.getElementById("tunnelLights");
+        const cols = ["#f3d19a", "#e25b5b", "#8ad0a4", "#fff4d2", "#e8b86d", "#7ec8e3"];
+        for (let i = 0; i < 36; i++) {
+          const z = -30 - i * 26;
+          const side = i % 2 === 0 ? -1 : 1;
+          const d = document.createElement("span");
+          d.className = "t-bulb";
+          d.style.background = cols[i % cols.length];
+          d.style.setProperty("--glow", cols[i % cols.length]);
+          d.style.transform = "translate3d(" + (side * 38) + "vw," + ((i % 5) * 7 - 10) + "vh," + z + "px)";
+          box.appendChild(d);
+        }
+      })();
+
+      function swapBg() {
+        front.classList.remove("on", "walk-out", "walk-back-out", "no-ken");
+        back.classList.add("on");
+        back.classList.remove("no-ken");
+        var tmp = front; front = back; back = tmp;
+      }
+
       function go(n) {
+        if (walking) return;
         if (n < 0 || n >= total || n === index) {
           render(true);
           return;
         }
+        const forward = n > index;
+        if (reduceMotion) {
+          index = n;
+          setBg(back, pages[index]);
+          back.classList.add("on");
+          front.classList.remove("on");
+          var tmp = front; front = back; back = tmp;
+          render(false);
+          return;
+        }
+        walking = true;
+        closeMenu();
         index = n;
         setBg(back, pages[index]);
-        back.classList.add("on");
-        front.classList.remove("on");
-        var tmp = front; front = back; back = tmp;
-        render(false);
+        portal.style.backgroundImage = 'url("' + pages[index].dataset.bg + '")';
+        stageEl.classList.add("walking");
+        copyEl.classList.add("away");
+        front.classList.add("no-ken", forward ? "walk-out" : "walk-back-out");
+        tunnel.classList.remove("rush", "leaving", "on");
+        void tunnel.offsetWidth;
+        tunnel.classList.add("on");
+        requestAnimationFrame(function () {
+          requestAnimationFrame(function () {
+            tunnel.classList.add("rush");
+          });
+        });
+        window.setTimeout(function () {
+          back.classList.add("on", "no-ken");
+        }, 780);
+        window.setTimeout(function () {
+          tunnel.classList.add("leaving");
+          swapBg();
+          render(false);
+        }, WALK_MS - 160);
+        window.setTimeout(function () {
+          tunnel.classList.remove("on", "rush", "leaving");
+          stageEl.classList.remove("walking");
+          copyEl.classList.remove("away");
+          walking = false;
+        }, WALK_MS);
       }
 
       function next() { go(Math.min(total - 1, index + 1)); }
