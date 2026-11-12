@@ -25,3 +25,9 @@ https://crazieeeee.github.io/supermarket-rush/stl-prep/
 ## Christmas Podcast
 
 https://crazieeeee.github.io/supermarket-rush/christmas-podcast/
+
+## Review Rush
+
+Primary 4 classroom English game for Longman Elect 4A Chapter 4 Eating out, Language Focus 2 (better / the best, worse / the worst).
+
+https://crazieeeee.github.io/supermarket-rush/review-rush/
