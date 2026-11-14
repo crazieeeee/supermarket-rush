@@ -691,9 +691,9 @@ img {
 }
 .shelf-stage {
   position: relative;
-  width: min(100%, 1100px, calc(min(52vh, 560px) * 16 / 9));
+  width: min(100%, 1100px, calc(min(42vh, 480px) * 16 / 9));
   aspect-ratio: 16 / 9;
-  max-height: min(52vh, 560px);
+  max-height: min(42vh, 480px);
   height: auto;
   overflow: hidden;
   border-radius: 12px;
@@ -727,18 +727,18 @@ img {
   display: block;
 }
 .yesno {
-  display: flex;
-  gap: 0.9rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.7rem;
   justify-content: center;
-  width: min(640px, 100%);
+  width: min(860px, 100%);
 }
-.yesno .btn {
-  flex: 1 1 180px;
-  min-height: 68px;
-  font-size: clamp(24px, 2.4vw, 32px);
+.yesno .choice-btn {
+  flex: none;
+  min-height: 64px;
+  font-size: clamp(20px, 2.1vw, 28px);
+  width: 100%;
 }
-.btn-yes { background: var(--yes); border-color: #0A5A2C; box-shadow: 0 3px 0 #0A5A2C; }
-.btn-no { background: var(--no); border-color: #8A1A14; box-shadow: 0 3px 0 #8A1A14; color: #fff; }
 
 /* ---------- overlays ---------- */
 #feedback-overlay, #pause-overlay, #mode-overlay {
@@ -909,7 +909,7 @@ img {
   .food-piece, .bin, .fb-card { transition: none; }
 }
 
-</style>
+  </style>
 </head>
 <body>
   <div id="screen-start" class="screen active">
@@ -967,7 +967,7 @@ img {
         <div class="how-step">
           <span class="how-num">3</span>
           <h3>Shop check</h3>
-          <p>Look at the shelf in Mint Lane Shop. Tap <strong>Yes</strong> or <strong>No</strong>.</p>
+          <p>Look at the shelf in Mint Lane Shop. Tap the right answer: <strong>Yes, there is.</strong> <strong>No, there isn't.</strong> <strong>Yes, there are.</strong> <strong>No, there aren't.</strong></p>
         </div>
       </div>
       <p class="how-note">You have 3 lives. The timer gets a little faster. You can pause at any time.</p>
@@ -1201,7 +1201,7 @@ window.MEAL_TIME_IMAGES = {
     },
     3: {
       title: "Shop check",
-      msg: "Look at the shelf. Tap Yes or No."
+      msg: "Look at the shelf. Tap the right answer."
     }
   };
 
@@ -1310,6 +1310,21 @@ window.MEAL_TIME_IMAGES = {
     return items;
   }
 
+
+  var MODE3_OPTIONS = [
+    "Yes, there is.",
+    "No, there isn't.",
+    "Yes, there are.",
+    "No, there aren't."
+  ];
+
+  function mode3Answer(food, wantYes) {
+    if (food.kind === "countable") {
+      return wantYes ? "Yes, there are." : "No, there aren't.";
+    }
+    return wantYes ? "Yes, there is." : "No, there isn't.";
+  }
+
   function buildMode3() {
     var first = shuffle(ALL_IDS);
     var extras = shuffle(ALL_IDS).slice(0, MODE3_ROUNDS - 6);
@@ -1328,10 +1343,10 @@ window.MEAL_TIME_IMAGES = {
       rounds.push({
         mode: 3,
         food: id,
-        answer: wantYes ? "yes" : "no",
         present: present,
         layout: placeOnShelves(present, i + 1),
-        question: FOODS[id].question
+        question: FOODS[id].question,
+        answer: mode3Answer(FOODS[id], wantYes)
       });
     }
     return rounds;
@@ -1851,7 +1866,7 @@ window.MEAL_TIME_IMAGES = {
 
     var hint = document.createElement("p");
     hint.className = "hint";
-    hint.textContent = "Look at the shelf in Mint Lane Shop. Tap Yes or No.";
+    hint.textContent = "Look at the shelf in Mint Lane Shop. Tap the right answer.";
 
     var stage = document.createElement("div");
     stage.className = "shop-stage";
@@ -1878,19 +1893,19 @@ window.MEAL_TIME_IMAGES = {
 
     var yesno = document.createElement("div");
     yesno.className = "yesno";
-    ["yes", "no"].forEach(function (val) {
+    var options = shuffle(MODE3_OPTIONS);
+    options.forEach(function (text, i) {
       var btn = document.createElement("button");
       btn.type = "button";
-      btn.className = "btn " + (val === "yes" ? "btn-yes" : "btn-no");
-      btn.id = "btn-" + val;
-      btn.textContent = val === "yes" ? "Yes" : "No";
+      btn.className = "choice-btn";
+      btn.id = "choice-" + (i + 1);
+      btn.textContent = text;
       btn.addEventListener("click", function () {
         if (inputLocked || state.paused) return;
         unlockAudio();
-        var ok = val === q.answer;
-        var fact = (q.answer === "yes" ? "Yes. " + food.yesFact : "No. " + food.noFact);
-        var sentence = (ok ? "Yes! " : "Not quite. ") + fact;
-        settle(ok, sentence, fact);
+        var ok = text === q.answer;
+        var sentence = (ok ? "Yes! " : "Not quite. We say: ") + q.answer;
+        settle(ok, sentence, q.answer);
       });
       yesno.appendChild(btn);
     });
@@ -1916,9 +1931,8 @@ window.MEAL_TIME_IMAGES = {
       line = "Time is up. We say: " + food.question;
       correct = food.question;
     } else {
-      var fact = (q.answer === "yes" ? "Yes. " + food.yesFact : "No. " + food.noFact);
-      line = "Time is up. " + fact;
-      correct = fact;
+      line = "Time is up. We say: " + q.answer;
+      correct = q.answer;
     }
     settle(false, line, correct, true);
   }
@@ -2064,11 +2078,15 @@ window.MEAL_TIME_IMAGES = {
     if (e.key === "1") {
       if (q.mode === 1) submitSort("countable");
       else if (q.mode === 2 && $("choice-1")) $("choice-1").click();
-      else if (q.mode === 3 && $("btn-yes")) $("btn-yes").click();
+      else if (q.mode === 3 && $("choice-1")) $("choice-1").click();
     } else if (e.key === "2") {
       if (q.mode === 1) submitSort("uncountable");
       else if (q.mode === 2 && $("choice-2")) $("choice-2").click();
-      else if (q.mode === 3 && $("btn-no")) $("btn-no").click();
+      else if (q.mode === 3 && $("choice-2")) $("choice-2").click();
+    } else if (e.key === "3") {
+      if (q.mode === 3 && $("choice-3")) $("choice-3").click();
+    } else if (e.key === "4") {
+      if (q.mode === 3 && $("choice-4")) $("choice-4").click();
     }
   }
 
